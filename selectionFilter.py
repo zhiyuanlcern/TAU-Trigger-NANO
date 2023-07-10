@@ -14,7 +14,7 @@ class selectionFilter(Module):
     def __init__(self, isMC, era):
         self.isMC = isMC
         self.era = era
-        self.nanoVer = 9
+        self.nanoVer = 10
 
         # cutflow hist
         self.cutflow_hist = R.TH1F('pre_selection','pre_selection',20,0,20)

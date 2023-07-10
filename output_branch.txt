@@ -1,6 +1,8 @@
 drop *
 keep muon*
 keep tau*
+keep second*
+keep best*
 keep vis_mass
 keep TrigObj_*
 keep npv

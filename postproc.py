@@ -27,6 +27,7 @@ def main():
     parser.add_argument('--isMC', required=True, type=int, help="judge if isMC")
     # parser.add_argument('--nanoVer', required=False, type=int, default=9, help="NanoAOD Version")
     parser.add_argument('--era', required=True, type=str, help="")
+    parser.add_argument('--maxEntries', required=False, type=int, default=None)
     args = parser.parse_args()
     print "args = ",args
 
@@ -91,7 +92,8 @@ def main():
                       branchsel = "keep_and_drop.txt", 
                       modules= Modules, 
                       provenance=True,
-                      outputbranchsel = "output_branch.txt"
+                      outputbranchsel = "output_branch.txt",
+                      maxEntries =args.maxEntries
     )
     p.run()
     print("Done !")

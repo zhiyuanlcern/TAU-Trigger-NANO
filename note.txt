@@ -1,0 +1,16 @@
+two steps to produce samples:
+1. postproc.py
+first setup with source setup-python2.7.sh  
+then run Jordan_run.sh with postproc.py uncommented.
+The output will be in postproc_output/ .
+
+Selection defined in tupleProducer.py
+
+sample source: /eos/cms/store/group/phys_tau/TauFW/nanoV10/Run2_2018//DYJetsToTauTauToMuTauh_M-50/
+local sample location: DYJetsToTauTauToMuTauh_M-50/
+
+2. skimTuple.py
+source setup-python3.sh 
+take input from output of postproc.py.
+output will be in skim_output/
+

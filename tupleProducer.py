@@ -21,7 +21,11 @@ class tupleProducer(Module):
         self.isMC = isMC
         self.era = era
         self.count = 0
+        self.nanoVer = 10
+        self.nanoVer = 10
         self.nanoVer = 9
+        self.nanoVer = 10
+        self.nanoVer = 10
         
         # producer hist
         self.producer_hist = R.TH1F('producer_selection','producer_selection',20,0,20)
@@ -142,6 +146,42 @@ class tupleProducer(Module):
         
         self.out.branch("muon_trig_obj_idx", "I")
         self.out.branch("tau_trig_obj_idx", "I")
+
+        self.out.branch("tau_rawIso", "F")
+
+        self.out.branch("second_tau_rawIso", "F")
+        self.out.branch("second_tau_pt", "F")
+        self.out.branch("second_tau_eta", "F")
+        self.out.branch("second_tau_phi", "F")
+        self.out.branch("second_tau_mass", "F")
+
+        self.out.branch("second_tau_charge","I")
+        self.out.branch("second_tau_decayMode","I")
+        self.out.branch("second_tau_dxy","F")
+        self.out.branch("second_tau_dz","F")
+        self.out.branch("second_tau_idDeepTau2017v2p1VSe","I")
+        self.out.branch("second_tau_idDeepTau2017v2p1VSmu","I")
+        self.out.branch("second_tau_idDeepTau2017v2p1VSjet","I")
+        self.out.branch("second_tau_rawDeepTau2017v2p1VSe","F")
+        self.out.branch("second_tau_rawDeepTau2017v2p1VSmu","F")
+        self.out.branch("second_tau_rawDeepTau2017v2p1VSjet","F")
+
+        self.out.branch("best_tau_rawIso", "F")
+        self.out.branch("best_tau_pt", "F")
+        self.out.branch("best_tau_eta", "F")
+        self.out.branch("best_tau_phi", "F")
+        self.out.branch("best_tau_mass", "F")
+
+        self.out.branch("best_tau_charge","I")
+        self.out.branch("best_tau_decayMode","I")
+        self.out.branch("best_tau_dxy","F")
+        self.out.branch("best_tau_dz","F")
+        self.out.branch("best_tau_idDeepTau2017v2p1VSe","I")
+        self.out.branch("best_tau_idDeepTau2017v2p1VSmu","I")
+        self.out.branch("best_tau_idDeepTau2017v2p1VSjet","I")
+        self.out.branch("best_tau_rawDeepTau2017v2p1VSe","F")
+        self.out.branch("best_tau_rawDeepTau2017v2p1VSmu","F")
+        self.out.branch("best_tau_rawDeepTau2017v2p1VSjet","F")
 
         # test for input tree to get HLT result
         self.inTree = inputTree
@@ -523,6 +563,7 @@ class tupleProducer(Module):
         best_tau = dict()
         for _t, _tau in enumerate(taus):
             _tau_v4 = _tau.p4()
+            # print("stats for the tau in Botao", _tau_v4.Pt(), abs(_tau_v4.Eta()), self.deltaR2(signalMu_v4, _tau_v4) )   
             if (_tau_v4.Pt()) > 18 and (abs(_tau_v4.Eta()) < 2.3) and (self.deltaR2(signalMu_v4, _tau_v4) > deltaR2Thr):
                 if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017"):
                     pass_mva_sel = (_tau.idDecayModeOldDMs > 0)  # idDecayModeOldDMs for nano V10 tau group tuple
@@ -583,8 +624,66 @@ class tupleProducer(Module):
                 raise RuntimeError("Inconsistency in CollectTaus algorithm.")
             selected_taus.append( (reco_tau, selected_gen_tau) )
             selected_taus_selection = gen
+        # if selected_taus is not None:
+        #     if len(selected_taus) > 0:
+        #         if selected_taus[0][0] is not None:
+        #             print("botao's selection", selected_taus[0][0].p4().Pt(), selected_taus[0][0].p4().Eta())
+
+                # print(selected_taus[0].rawIso)
         return selected_taus, selected_taus_selection
 
+
+
+
+    def CollectTwoTaus(self, signalMu_v4, taus, genleptons, deltaR2Thr):
+        gen = 1
+        pt = 2
+        ntaus = 0 
+        ntaus_passed = 0
+        best_tau = None
+        second_best_tau = None
+        has_gen_tau = False
+        # print(taus)
+        # if len(taus) < 2:
+        #     return taus, False
+        # print("len(taus)",len(taus))
+
+        for _t, _tau in enumerate(taus):
+            # ntaus +=1
+            _tau_v4 = _tau.p4()
+            # print("stats for the tau", _tau_v4.Pt(), abs(_tau_v4.Eta()), self.deltaR2(signalMu_v4, _tau_v4) )    
+            if (_tau_v4.Pt()) > 18 and (abs(_tau_v4.Eta()) < 2.3) and (self.deltaR2(signalMu_v4, _tau_v4) > deltaR2Thr):
+                ntaus_passed+=1
+                # print("iso: ", _tau.rawIso)
+                # if genleptons is None:
+                #     gen_tau = None
+                # else:
+                #     gen_tau = self.lepton_gen_match(_tau, genleptons)
+                # if gen_tau is not None:
+                #     has_gen_tau = (gen_tau.match != 6)
+                # if gen_tau is not None:  # Tau matches a gen_tau
+                if best_tau is None:
+                    best_tau = _tau
+                    second_best_tau = _tau
+                if best_tau is not None:
+                    if _tau.rawIso > best_tau.rawIso:
+                        best_tau = _tau  # Update best_tau if it's the first one or if it has worse isolation than the current best_tau
+                    else:  ## the current tau has better isolation than the best tau
+                        ## now check if the current tau has better isolation than the second best tau
+                        if  _tau.rawIso < second_best_tau.rawIso:
+                            second_best_tau = _tau  # Update second_best_tau if it's the first one or if it has worse isolation than the current second_best_tau
+        # check at the end to find if a gen tau is matched to the best tau, if not return None
+        # if has_gen_tau is False:
+        #     second_best_tau = None
+        # if best_tau is not None:
+            # print( "best_tau.rawIso, second_best_tau.rawIso,",best_tau.rawIso, second_best_tau.rawIso,)
+        if ntaus_passed < 2:
+            second_best_tau = None
+        if second_best_tau is not None and best_tau is not None:
+            if ( self.deltaR2( best_tau.p4(), second_best_tau.p4() )  <deltaR2Thr):
+                second_best_tau = None
+        return best_tau, second_best_tau
+    
     def selectGenLeg(self, genleptons, True):
         matches = 5  # 5 stand for tau
         leg = None
@@ -713,6 +812,9 @@ class tupleProducer(Module):
 
         # sele tau as a list? (reco_tau, gen_tau, reco_tau_id)
         selected_taus, sel = self.collectTaus(signalMu_v4, taus, genleptons, deltaR2Thr)
+        best_tau, second_tau =  self.CollectTwoTaus(signalMu_v4, taus, genleptons, deltaR2Thr)
+        has_second_tau = True if second_tau else False
+        
         if len(selected_taus) <= 0:
             has_tau = False
             tau = None
@@ -725,6 +827,8 @@ class tupleProducer(Module):
             has_reco_tau = False
         else:
             has_reco_tau = True
+        if has_reco_tau and best_tau is None:
+            print( "wtf???? ",tau.p4().Pt(), tau.p4().Eta(), self.deltaR2(signalMu_v4, tau.p4()), tau.p4().Phi(), tau.p4().M())
         if gen_tau is None:
             has_gen_tau = False
         else:
@@ -843,6 +947,7 @@ class tupleProducer(Module):
             self.out.fillBranch("tau_rawDeepTau2017v2p1VSe", tau.rawDeepTau2017v2p1VSe)
             self.out.fillBranch("tau_rawDeepTau2017v2p1VSmu", tau.rawDeepTau2017v2p1VSmu)
             self.out.fillBranch("tau_rawDeepTau2017v2p1VSjet", tau.rawDeepTau2017v2p1VSjet)
+            self.out.fillBranch("tau_rawIso", tau.rawIso)
             
             # self.out.fillBranch("tau_idDeepTau2018v2p5VSe", tau.idDeepTau2018v2p5VSe)
             # self.out.fillBranch("tau_idDeepTau2018v2p5VSmu", tau.idDeepTau2018v2p5VSmu)
@@ -865,6 +970,7 @@ class tupleProducer(Module):
             self.out.fillBranch("tau_rawDeepTau2017v2p1VSe", -999.0)
             self.out.fillBranch("tau_rawDeepTau2017v2p1VSmu", -999.0)
             self.out.fillBranch("tau_rawDeepTau2017v2p1VSjet", -999.0)
+            self.out.fillBranch("tau_rawIso", -999.0)
 
             # self.out.fillBranch("tau_idDeepTau2018v2p5VSe", -999)
             # self.out.fillBranch("tau_idDeepTau2018v2p5VSmu", -999)
@@ -872,6 +978,79 @@ class tupleProducer(Module):
             # self.out.fillBranch("tau_rawDeepTau2018v2p5VSe", -999.0)
             # self.out.fillBranch("tau_rawDeepTau2018v2p5VSmu", -999.0)
             # self.out.fillBranch("tau_rawDeepTau2018v2p5VSjet", -999.0)
+        if best_tau is not None:
+            # print(best_tau)
+            self.out.fillBranch("best_tau_pt", best_tau.p4().Pt())
+            self.out.fillBranch("best_tau_eta", best_tau.p4().Eta())
+            self.out.fillBranch("best_tau_phi", best_tau.p4().Phi())
+            self.out.fillBranch("best_tau_mass", best_tau.p4().M())
+            self.out.fillBranch("best_tau_charge", best_tau.charge)
+            self.out.fillBranch("best_tau_decayMode", best_tau.decayMode)
+            self.out.fillBranch("best_tau_dxy", best_tau.dxy)
+            self.out.fillBranch("best_tau_dz", best_tau.dz)
+            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSe", best_tau.idDeepTau2017v2p1VSe)
+            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSmu", best_tau.idDeepTau2017v2p1VSmu)
+            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSjet", best_tau.idDeepTau2017v2p1VSjet)
+            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSe", best_tau.rawDeepTau2017v2p1VSe)
+            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSmu", best_tau.rawDeepTau2017v2p1VSmu)
+            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSjet", best_tau.rawDeepTau2017v2p1VSjet)
+            self.out.fillBranch("best_tau_rawIso", best_tau.rawIso)
+        else:
+            # print("best_tau is None", best_tau)
+            self.out.fillBranch("best_tau_pt",-999.0)
+            self.out.fillBranch("best_tau_eta", -999.0)
+            self.out.fillBranch("best_tau_phi", -999.0)
+            self.out.fillBranch("best_tau_mass", -999.0)
+            self.out.fillBranch("best_tau_charge", -999)
+            self.out.fillBranch("best_tau_decayMode", -999)
+            self.out.fillBranch("best_tau_dxy", -999.0)
+            self.out.fillBranch("best_tau_dz", -999.0)
+            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSe", -999)
+            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSmu", -999)
+            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSjet", -999)
+            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSe", -999.0)
+            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSmu", -999.0)
+            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSjet", -999.0)
+            self.out.fillBranch("best_tau_rawIso", -999.0)
+        
+        if has_second_tau:
+            # print(second_tau)
+            self.out.fillBranch("second_tau_pt", second_tau.p4().Pt())
+            self.out.fillBranch("second_tau_eta", second_tau.p4().Eta())
+            self.out.fillBranch("second_tau_phi", second_tau.p4().Phi())
+            self.out.fillBranch("second_tau_mass", second_tau.p4().M())
+            self.out.fillBranch("second_tau_charge", second_tau.charge)
+            self.out.fillBranch("second_tau_decayMode", second_tau.decayMode)
+            self.out.fillBranch("second_tau_dxy", second_tau.dxy)
+            self.out.fillBranch("second_tau_dz", second_tau.dz)
+            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSe", second_tau.idDeepTau2017v2p1VSe)
+            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSmu", second_tau.idDeepTau2017v2p1VSmu)
+            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSjet", second_tau.idDeepTau2017v2p1VSjet)
+            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSe", second_tau.rawDeepTau2017v2p1VSe)
+            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSmu", second_tau.rawDeepTau2017v2p1VSmu)
+            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSjet", second_tau.rawDeepTau2017v2p1VSjet)
+            self.out.fillBranch("second_tau_rawIso", second_tau.rawIso)
+
+
+        else:
+            self.out.fillBranch("second_tau_pt",-999.0)
+            self.out.fillBranch("second_tau_eta", -999.0)
+            self.out.fillBranch("second_tau_phi", -999.0)
+            self.out.fillBranch("second_tau_mass", -999.0)
+            self.out.fillBranch("second_tau_charge", -999)
+            self.out.fillBranch("second_tau_decayMode", -999)
+            self.out.fillBranch("second_tau_dxy", -999.0)
+            self.out.fillBranch("second_tau_dz", -999.0)
+            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSe", -999)
+            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSmu", -999)
+            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSjet", -999)
+            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSe", -999.0)
+            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSmu", -999.0)
+            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSjet", -999.0)
+            self.out.fillBranch("second_tau_rawIso", -999.0)
+        
+    
+
         # fill visible mass
         self.out.fillBranch("vis_mass", (signalMu_v4 + tau_ref_p4).M())
         # fill other
