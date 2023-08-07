@@ -11,6 +11,7 @@ import ROOT
 
 parser = argparse.ArgumentParser(description='Create turn on curves.')
 parser.add_argument('--input-data', required=True, type=str, help="skimmed data input")
+parser.add_argument('--conditional', required=True, type=int, help="run for conditional probability or not? 1 for yes and 0 for no")
 parser.add_argument('--input-dy-mc', required=True, type=str, help="skimmed DY MC input")
 parser.add_argument('--output', required=True, type=str, help="output file prefix")
 parser.add_argument('--channels', required=False, type=str, default='etau,mutau,ditau', help="channels to process")
@@ -34,9 +35,11 @@ bin_scans = {
     # 2:  [ 0.01 ],
     # 5:  [ 0.01, 0.05 ],
     # 10: [ 0.05, 0.1 ],
-    # 20: [ 0.1, 0.2 ],
-    #50: [ 0.2, 0.4 ],
-    100: [ 0.2 ],
+    20: [ 0.1, 0.2 ],
+    50: [ 0.2,0.3],
+    100: [ 0.3,0.4 ],
+    200: [0.4],
+    
 }
 bin_scan_pairs = []
 for max_bin_delta_pt, max_rel_err_vec in bin_scans.items():
@@ -77,17 +80,28 @@ def CreateHistograms(input_file, channels, decay_modes, discr_name, working_poin
             dm_labels[dm] = ''
             df_dm = df
         else:
-            dm_labels[dm] = '_dm{}'.format(dm)
-            df_dm = df.Filter('tau_decayMode == {}'.format(dm))
+            if dm == '1011':
+                dm_labels[dm] = '_dm1011'
+                df_dm = df.Filter('(tau_decayMode == 10 || tau_decayMode == 11) ')
+            
+            else:
+                dm_labels[dm] = '_dm{}'.format(dm)
+                df_dm = df.Filter('tau_decayMode == {}'.format(dm))
         turnOn_data[dm] = {}
         for wp in working_points:
             wp_bit = ParseEnum(DiscriminatorWP, wp)
             # df_wp = df_dm.Filter('({} & (1 << {})) != 0'.format(discr_name, wp_bit))
             df_wp = df_dm.Filter('{0} >= {1}'.format(discr_name, wp_bit))
+
             turnOn_data[dm][wp] = {}
             for channel in channels:
                 turnOn_data[dm][wp][channel] = {}
-                df_ch = df_wp.Filter('pass_{} > 0.5'.format(channel))
+                if args.conditional:
+                    df_wp  = df_wp.Filter("pass_{}".format(channel)) ## denominator: events passing mutau
+                    df_ch = df_wp.Filter('pass_{}_second_tau_given > 0.5'.format(channel)) ## numerator: events passing mutau and second tau passing mutau
+                else:    
+                    # df_wp  = df_wp.Filter("pass_{}".format(channel)) ## denominator: events passing mutau
+                    df_ch = df_wp.Filter('pass_{}_second_tau > 0.5'.format(channel)) ## numerator: events passing mutau and second tau passing mutau
                 for model_name, hist_model in hist_models.items():
                     turn_on = TurnOnData()
                     turn_on.hist_total = df_wp.Histo1D(hist_model, var, 'weight')
@@ -150,7 +164,7 @@ hist_models = {
 turnOn_data = [None] * n_inputs
 for input_id in range(n_inputs):
     print("Creating {} histograms...".format(labels[input_id]))
-    turnOn_data[input_id] = CreateHistograms(input_files[input_id], channels, decay_modes, 'tau_idDeepTau2017v2p1VSjet', #'tau_idDeepTau2018v2p5VSjet',
+    turnOn_data[input_id] = CreateHistograms(input_files[input_id], channels, decay_modes, 'second_tau_idDeepTau2017v2p1VSjet', #'tau_idDeepTau2018v2p5VSjet',
                                              working_points, hist_models, labels[input_id], var, output_file)
 
 colors = [ ROOT.kRed, ROOT.kBlack ]

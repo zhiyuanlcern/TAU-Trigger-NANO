@@ -39,10 +39,10 @@ def MinTarget(dy, eff):
 class FitResults:
     def __init__(self, eff, x_pred):
         kernel_high = ConstantKernel()
-        kernel_low = ConstantKernel() * Matern(nu=1, length_scale_bounds=(10, 100), length_scale=20)
+        kernel_low = ConstantKernel() * Matern(nu=1, length_scale_bounds=(1, 300), length_scale=20)
         N = eff.x.shape[0]
         res = scipy.optimize.minimize(MinTarget, np.zeros(N), args=(eff,), bounds = [ [0, 1] ] * N,
-                                      options={"maxfun": int(1e6)})
+                                      options={"maxfun": int(1e6), "maxiter": 10000000}, )
         if not res.success:
             print(res)
             raise RuntimeError("Unable to prefit")
@@ -70,12 +70,25 @@ class FitResults:
 
         low_pt = eff.x <= self.pt_start_flat
         high_pt = eff.x >= self.pt_start_flat
+        
+        from scipy.optimize import fmin_l_bfgs_b
 
-        self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, n_restarts_optimizer=10)
+        def custom_optimizer(obj_func, initial_theta, bounds):
+            # Wrap around the 'fmin_l_bfgs_b' optimizer
+            theta_opt, func_min, info = fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds, maxiter=100)
+            return theta_opt, func_min
+
+        # Use the custom optimizer in GaussianProcessRegressor
+        self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, optimizer=custom_optimizer)
         self.gp_high.fit(np.atleast_2d(eff.x[high_pt]).T, eff.y[high_pt])
-        self.gp_low = GaussianProcessRegressor(kernel=kernel_low, alpha=np.append([0], yerr[low_pt] ** 2),
-                                               n_restarts_optimizer=10)
+        self.gp_low = GaussianProcessRegressor(kernel=kernel_low, alpha=np.append([0], yerr[low_pt] ** 2),optimizer=custom_optimizer)
         self.gp_low.fit(np.atleast_2d(np.append([10], eff.x[low_pt])).T, np.append([0], eff.y[low_pt]))
+
+        # self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, n_restarts_optimizer=10)
+        # self.gp_high.fit(np.atleast_2d(eff.x[high_pt]).T, eff.y[high_pt])
+        # self.gp_low = GaussianProcessRegressor(kernel=kernel_low, alpha=np.append([0], yerr[low_pt] ** 2),
+        #                                        n_restarts_optimizer=10)
+        # self.gp_low.fit(np.atleast_2d(np.append([10], eff.x[low_pt])).T, np.append([0], eff.y[low_pt]))
 
         self.y_pred, sigma_pred = self.Predict(x_pred)
 
