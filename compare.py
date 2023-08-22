@@ -24,6 +24,7 @@ from RootObjects import Histogram, Graph
 
 parser = argparse.ArgumentParser(description='Fit turn-on curves.')
 parser.add_argument('--input', required=True, type=str, help="ROOT file with turn-on curves")
+parser.add_argument('--mc', required=True, type=int, help="1 for running data 0 for running mc")
 parser.add_argument('--output', required=True, type=str, help="output file prefix")
 parser.add_argument('--channels', required=False, type=str, default='etau,mutau,ditau', help="channels to process")
 parser.add_argument('--decay-modes', required=False, type=str, default='all,0,1,10,11', help="decay modes to process")
@@ -39,10 +40,10 @@ def MinTarget(dy, eff):
 class FitResults:
     def __init__(self, eff, x_pred):
         kernel_high = ConstantKernel()
-        kernel_low = ConstantKernel() * Matern(nu=1, length_scale_bounds=(1, 300), length_scale=20)
+        kernel_low = ConstantKernel() * Matern(nu=1, length_scale_bounds=(10, 100), length_scale=20)
         N = eff.x.shape[0]
         res = scipy.optimize.minimize(MinTarget, np.zeros(N), args=(eff,), bounds = [ [0, 1] ] * N,
-                                      options={"maxfun": int(1e6), "maxiter": 10000000}, )
+                                      options={"maxfun": int(1e6)})
         if not res.success:
             print(res)
             raise RuntimeError("Unable to prefit")
@@ -70,25 +71,12 @@ class FitResults:
 
         low_pt = eff.x <= self.pt_start_flat
         high_pt = eff.x >= self.pt_start_flat
-        
-        from scipy.optimize import fmin_l_bfgs_b
 
-        def custom_optimizer(obj_func, initial_theta, bounds):
-            # Wrap around the 'fmin_l_bfgs_b' optimizer
-            theta_opt, func_min, info = fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds, maxiter=100)
-            return theta_opt, func_min
-
-        # Use the custom optimizer in GaussianProcessRegressor
-        self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, optimizer=custom_optimizer)
+        self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, n_restarts_optimizer=10)
         self.gp_high.fit(np.atleast_2d(eff.x[high_pt]).T, eff.y[high_pt])
-        self.gp_low = GaussianProcessRegressor(kernel=kernel_low, alpha=np.append([0], yerr[low_pt] ** 2),optimizer=custom_optimizer)
+        self.gp_low = GaussianProcessRegressor(kernel=kernel_low, alpha=np.append([0], yerr[low_pt] ** 2),
+                                               n_restarts_optimizer=10)
         self.gp_low.fit(np.atleast_2d(np.append([10], eff.x[low_pt])).T, np.append([0], eff.y[low_pt]))
-
-        # self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, n_restarts_optimizer=10)
-        # self.gp_high.fit(np.atleast_2d(eff.x[high_pt]).T, eff.y[high_pt])
-        # self.gp_low = GaussianProcessRegressor(kernel=kernel_low, alpha=np.append([0], yerr[low_pt] ** 2),
-        #                                        n_restarts_optimizer=10)
-        # self.gp_low.fit(np.atleast_2d(np.append([10], eff.x[low_pt])).T, np.append([0], eff.y[low_pt]))
 
         self.y_pred, sigma_pred = self.Predict(x_pred)
 
@@ -127,8 +115,12 @@ decay_modes = args.decay_modes.split(',')
 working_points = args.working_points.split(',')
 ch_validity_thrs = { 'etau': 35, 'mutau': 32, 'ditau': 40 }
 
-file = ROOT.TFile(args.input, 'READ')
-output_file = ROOT.TFile('{}.root'.format(args.output), 'RECREATE', '', ROOT.RCompressionSetting.EDefaults.kUseSmallest)
+files = args.input.split(',')
+file = ROOT.TFile(files[0], 'READ') ##  tau_2  prob
+file_2 =ROOT.TFile(files[1], 'READ') ##  tau_2 given tau_1 prob
+hist_pattern =  'mc' if args.mc else 'data'
+
+output_file = ROOT.TFile('{}.root'.format(args.output + hist_pattern), 'RECREATE', '', ROOT.RCompressionSetting.EDefaults.kUseSmallest)
 
 for channel in channels:
     with PdfPages('{}_{}.pdf'.format(args.output, channel)) as pdf:
@@ -138,8 +130,12 @@ for channel in channels:
                 dm_label = '_dm{}'.format(dm) if dm != 'all' else ''
                 name_pattern = '{{}}_{}_{}{}_fit_eff'.format(channel, wp, dm_label)
                 dm_label = '_dm'+ dm if len(dm) > 0 else ''
-                eff_data_root = file.Get(name_pattern.format('data'))
-                eff_mc_root = file.Get(name_pattern.format('mc'))
+                # eff_data_root = file.Get(name_pattern.format('data'))
+                # eff_mc_root = file.Get(name_pattern.format('mc'))
+
+
+                eff_data_root = file.Get(name_pattern.format(hist_pattern)) ## tau_2  prob
+                eff_mc_root = file_2.Get(name_pattern.format(hist_pattern)) ## tau_2 given tau_1 prob
                 eff_data = Graph(root_graph=eff_data_root)
                 eff_mc = Graph(root_graph=eff_mc_root)
                 pred_step = 0.1
@@ -221,14 +217,14 @@ for channel in channels:
                 ax.set_xlim([ 20, min(250, plt.xlim()[1]) ])
 
                 ax_ratio.set_xlabel("$p_T$ (GeV)", fontsize=12)
-                ax_ratio.set_ylabel("Data/MC SF", fontsize=12)
+                ax_ratio.set_ylabel(r"$P(\tau_2)$ /$P(\tau_2 | \tau_1)$", fontsize=12)
                 ax_ratio.set_ylim([0.5, 1.49])
 
                 validity_plt = ax.plot( [ ch_validity_thrs[channel] ] * 2, ax.get_ylim(), 'r--' )
                 ax_ratio.plot( [ ch_validity_thrs[channel] ] * 2, ax_ratio.get_ylim(), 'r--' )
 
                 ax.legend([ plt_data, plt_mc, plt_data_fitted[0], plt_mc_fitted[0], validity_plt[0] ],
-                          [ "Data", "MC", "Data fitted", "MC fitted", "Validity range"], fontsize=12, loc='lower right')
+                          [ r"P($\tau_2$)", r"P($\tau_2 | \tau_1$)", r"P($\tau_2$) fitted", r"P($\tau_2 | \tau_1$) fitted", "Validity range"], fontsize=12, loc='lower right')
 
 
                 plt.subplots_adjust(hspace=0)

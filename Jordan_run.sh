@@ -26,13 +26,13 @@ for file in $(find /eos/cms/store/group/phys_tau/TauFW/nanoV10/Run2_2017/SingleM
     # nohup python2 postproc.py --isMC 0 --era 2018 --output postproc_output/SingleMuon_Run2018$run/$(basename "$file") --input "$file" > log/postproc_log$run_$(basename "$file") 2>&1 &  
     nohup python2 postproc.py --isMC 0 --era 2017 --nanoVer 10 --output postproc_output/SingleMuon_Run2017$run/$(basename "$file") --input "$file" > log/postproc_log$run_$(basename "$file").txt 2>&1 &  
     
-    # If we've started the maximum number of jobs, wait for them to finish.
-    # if (( $i % $max_jobs == 0 )); then
-    #     wait
-    # fi
-    # i=$((i+1))
-done
-done
+#     # If we've started the maximum number of jobs, wait for them to finish.
+#     # if (( $i % $max_jobs == 0 )); then
+#     #     wait
+#     # fi
+#     # i=$((i+1))
+# done
+# done
 
 
 
