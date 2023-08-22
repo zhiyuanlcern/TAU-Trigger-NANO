@@ -37,7 +37,7 @@ def KatzLog(passed, total):
 def weighted_eff_confint_freqMC(n_passed, n_failed, n_passed_err, n_failed_err, alpha=1-0.68, n_gen=100000,
                                 max_gen_iters=100, min_stat=80000, seed=42, symmetric=True):
     assert n_passed > 0
-    assert n_failed > 0
+    assert n_failed >= 0
     assert n_passed_err >= 0
     assert n_failed_err >= 0
     assert alpha > 0 and alpha < 1
@@ -71,19 +71,22 @@ def weighted_eff_confint_freqMC(n_passed, n_failed, n_passed_err, n_failed_err, 
             raise RuntimeError("weighted_eff_confint_freqMC: unable to find a symmetric conf interval.")
         q_down = max(0., eff_exp - opt.root)
         q_up = min(1., eff_exp + opt.root)
+        if n_failed == 0:
+            print("Warning , efficiency is 1  " , n_passed, n_failed, n_passed_err, n_failed_err)
+            q_down = 1 - (n_passed_err**0.5 /n_passed)
         return q_down, q_up
     else:
         eff_up = eff[eff > eff_exp]
         eff_down = eff[eff <= eff_exp]
         frac_up = len(eff_up) / float(n_samples)
         frac_down = len(eff_down) / float(n_samples)
-        assert frac_up > 0
+        assert frac_up >= 0
         assert frac_down > 0
 
         def L(alpha_up, return_interal=False):
             alpha_up = min(alpha, max(0, alpha_up))
             alpha_down = (alpha - alpha_up)
-            alpha_up_scaled = alpha_up / frac_up
+            alpha_up_scaled = alpha_up / (frac_up)
             alpha_down_scaled = min(1., alpha_down / frac_down)
 
             q_up = np.quantile(eff_up, 1 - alpha_up_scaled) if alpha_up != 0 else 1.
@@ -185,7 +188,7 @@ def AutoRebinAndEfficiency(hist_passed, hist_total, bin_scan_pairs):
                     v_counter[sel_id] += hist[sel_id].values[n+k]
                     w2_counter[sel_id] += hist[sel_id].errors[n+k] ** 2
                 if v_counter[total] > 0 and math.sqrt(w2_counter[total]) / v_counter[total] < max_rel_error \
-                   and v_counter[passed] > 0 and v_counter[passed] < v_counter[total]:
+                   and v_counter[passed] > 0 and v_counter[passed] <= v_counter[total]:
                    #if v_counter[total] >= min_yield and v_counter[passed] > 0 and v_counter[passed] < v_counter[total]:
                     eff = v_counter[passed] / v_counter[total]
                     x_avg = np.average(hist[total].edges[n:n+k+1], weights=hist[total].values[n:n+k+1])

@@ -218,7 +218,7 @@ for channel in channels:
                 ax.set_title(title, fontsize=16)
                 ax.set_ylabel("Efficiency", fontsize=12)
                 ax.set_ylim([ 0., 1.1 ])
-                ax.set_xlim([ 20, min(200, plt.xlim()[1]) ])
+                ax.set_xlim([ 20, min(250, plt.xlim()[1]) ])
 
                 ax_ratio.set_xlabel("$p_T$ (GeV)", fontsize=12)
                 ax_ratio.set_ylabel("Data/MC SF", fontsize=12)

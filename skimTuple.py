@@ -115,7 +115,7 @@ if args.type == 'data':
     ]
 
     df_1 = df.Filter('run>=317509')
-    df_1 = df_1.Define("pass_mutau", "PassMuTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, tau_pt, tau_eta, tau_phi) && HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1 == 1")
+    df_1 = df_1.Define("pass_mutau", "PassMuTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi) && HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1 == 1")
     df_1 = df_1.Define("pass_etau", "PassElTauTrig(nTrigObj, TrigObj_l1pt, TrigObj_l1iso, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, tau_pt, tau_eta, tau_phi) && HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1 == 1")
     df_1 = df_1.Define("pass_ditau", "PassDiTauTrigMC(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, tau_pt, tau_eta, tau_phi) && HLT_IsoMu24_eta2p1_MediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg_CrossL1 == 1")
     df_1 = df_1.Define("pass_mutau_second_tau", "PassMuTauTrig_lowpT(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi) " ) 
@@ -132,7 +132,7 @@ if args.type == 'data':
     df_2 = df.Filter('run<317509')
     
     try:
-        df_2 = df_2.Define("pass_mutau", "PassMuTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, tau_pt, tau_eta, tau_phi) && HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1 == 1")
+        df_2 = df_2.Define("pass_mutau", "PassMuTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi) && HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1 == 1")
         df_2 = df_2.Define("pass_etau", "PassElTauTrig(nTrigObj, TrigObj_l1pt, TrigObj_l1iso, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, tau_pt, tau_eta, tau_phi) && HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1 == 1")
         df_2 = df_2.Define("pass_ditau", "PassDiTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, tau_pt, tau_eta, tau_phi) && HLT_IsoMu24_eta2p1_TightChargedIsoPFTau35_Trk1_eta2p1_Reg_CrossL1 == 1")
         df_2 = df_2.Define("pass_mutau_second_tau", "PassMuTauTrig_lowpT(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi)  " ) 
@@ -158,7 +158,7 @@ df = df.Define("pass_ditau", "PassDiTauTrigMC(nTrigObj, TrigObj_id, TrigObj_filt
 # df = df.Define("pass_mutau_trigger", "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1 == 1")
 df = df.Define("pass_mutau_second_tau", "PassMuTauTrig_lowpT(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi) ")
 df = df.Define("pass_mutau_second_tau_given", "PassMuTauTrig_lowpT(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi) && pass_mutau > 0.5")
-print("finished definin pass_triggers")
+print("finished defining pass_triggers")
 
 skimmed_branches.append("pass_ditau")
 skimmed_branches.append("pass_etau")
