@@ -25,7 +25,7 @@ def main():
     parser.add_argument('--inputFileList', required=False, type=str, help="NANO input file list")
     parser.add_argument('--output', required=True, type=str, help="eventTuple output")
     parser.add_argument('--isMC', required=True, type=int, help="judge if isMC")
-    # parser.add_argument('--nanoVer', required=False, type=int, default=9, help="NanoAOD Version")
+    parser.add_argument('--nanoVer', required=False, type=int, default=9, help="NanoAOD Version")
     parser.add_argument('--era', required=True, type=str, help="")
     parser.add_argument('--maxEntries', required=False, type=int, default=None)
     args = parser.parse_args()
@@ -39,7 +39,7 @@ def main():
     isMC = args.isMC
     output = args.output
     era = args.era
-    # nanoVer = args.nanoVer
+    nanoVer = args.nanoVer
     if args.input:
         files = [ args.input ]
     if args.inputFileList:
