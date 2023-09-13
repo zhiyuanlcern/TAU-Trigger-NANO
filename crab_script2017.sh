@@ -26,6 +26,6 @@ else
     era="2017"
 
     echo Found Proxy in: $X509_USER_PROXY
-    python crab_postproc.py --isMC $isMC --era $era
+    python crab_postproc.py --isMC $isMC --era $era --nanoVer "9"
 
 fi

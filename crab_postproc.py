@@ -27,11 +27,14 @@ def main():
     #parser.add_argument('--output', required=True, type=str, help="eventTuple output")
     parser.add_argument('--isMC', required=True, type=int, help="judge if isMC")
     parser.add_argument('--era', required=True, type=str, help="")
+    parser.add_argument('--nanoVer', required=False, type=int, default=9, help="NanoAOD Version")
     args = parser.parse_args()
     print "args = ",args
 
     isMC = args.isMC
     era = args.era
+    nanoVer = args.nanoVer
+
     #files = [ args.input ]
     
     #trigFile = './2017trigger.json'

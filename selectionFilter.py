@@ -124,7 +124,7 @@ class selectionFilter(Module):
                 break
         
         # Special for nanoV10 2018 Data
-        if (self.era == "2018" or self.nanoVer == 10):
+        if (self.era == "2018"):
             for _ele in electrons:
                 _ele_v4 = _ele.p4()
                 if (_ele_v4.Pt() > 10) and (abs(_ele_v4.Eta()) < 2.5) and (_ele.mvaIso_WPL > 0.5):

@@ -4,7 +4,7 @@ from CRABClient.UserUtilities import config
 config = Configuration()
 
 config.section_("General")
-config.General.requestName = 'DYJetsToTauTauToMuTauh_M-50_TuneCP5_13TeV-madgraphMLM-pythia8'
+config.General.requestName = 'DYJetsToTauTauToMuTauh_M-50_TuneCP5_13TeV-madgraphMLM-pythia8_2017'
 config.General.workArea = "crab2018-0427"
 config.General.transferLogs = False
 config.section_("JobType")
@@ -20,7 +20,7 @@ config.JobType.sendPythonFolder = True
 config.JobType.allowUndistributedCMSSW = True
 
 config.section_("Data")
-config.Data.inputDataset = '/DYJetsToTauTauToMuTauh_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer19UL18NanoAODv2-106X_upgrade2018_realistic_v15_L1v1-v1/NANOAODSIM'
+config.Data.inputDataset = '/DYJetsToTauTauToMuTauh_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv2-106X_mc2017_realistic_v8-v1/NANOAODSIM'
 #config.Data.inputDBS = 'phys03'
 config.Data.inputDBS = 'global'
 #config.Data.splitting = 'Automatic'
