@@ -73,7 +73,10 @@ def weighted_eff_confint_freqMC(n_passed, n_failed, n_passed_err, n_failed_err, 
         q_up = min(1., eff_exp + opt.root)
         if n_failed == 0:
             print("Warning , efficiency is 1  " , n_passed, n_failed, n_passed_err, n_failed_err)
-            q_down = 1 - (n_passed_err**0.5 /n_passed)
+            n_passed_err**0.5 /n_passed
+            q_down = 1 - ((n_passed_err/n_passed)**0.5)
+            q_up = 1 + ((n_passed_err/n_passed)**0.5)
+            print("q_down, q_up", q_down, q_up)
         return q_down, q_up
     else:
         eff_up = eff[eff > eff_exp]
@@ -206,6 +209,8 @@ def AutoRebinAndEfficiency(hist_passed, hist_total, bin_scan_pairs):
                                                                    math.sqrt(w2_counter[total] - w2_counter[passed]))
                     graphs.y_error_low[len(hist), n_output_points] = eff - eff_down
                     graphs.y_error_high[len(hist), n_output_points] = eff_up - eff
+                    print("graphs.y_error_low[len(hist), n_output_points]", graphs.y_error_low[len(hist), n_output_points])
+                    print("graphs.y_error_high[len(hist), n_output_points]", graphs.y_error_high[len(hist), n_output_points])
                     n_output_points += 1
                     bin_created = True
                     break

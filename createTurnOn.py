@@ -32,8 +32,8 @@ ROOT.TH1.SetDefaultSumw2()
 RootPlotting.ApplyDefaultGlobalStyle()
 
 bin_scans = {
-    2:  [ 0.01 ],
-    5:  [ 0.01, 0.05 ],
+    # 2:  [ 0.01 ],
+    # 5:  [ 0.01, 0.05 ],
     10: [ 0.05, 0.1 ],
     20: [  0.2 ],
     50: [ 0.2,0.3],
@@ -49,16 +49,14 @@ for max_bin_delta_pt, max_rel_err_vec in bin_scans.items():
 def CreateBins(max_pt, for_fitting):
     if for_fitting:
         step=1
-        # return np.arange(20, 1000+step, step=step), False
-        return np.arange(20, 500+step, step=step), False
+        return np.arange(20, 1000+step, step=step), False
         #high_pt_bins = np.arange(100, 501, step=5)
     else:
         #bins = np.arange(20, 100, step=10)
         bins = np.arange(20, 40, step=4)
         bins = np.append(bins, np.arange(40, 60, step=5))
         bins = np.append(bins, np.arange(60, 100, step=10))
-        # high_pt_bins = [ 100, 150, 200, 300, 400, 500, 650, 800, 1000 ]
-        high_pt_bins = [ 100, 150, 200, 300, 400, 500]
+        high_pt_bins = [ 100, 150, 200, 300, 400, 500, 650, 800, 1000 ]
         n = 0
         while n < len(high_pt_bins) and high_pt_bins[n] < max_pt:
             n += 1
