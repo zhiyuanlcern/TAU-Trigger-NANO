@@ -565,14 +565,14 @@ class tupleProducer(Module):
             _tau_v4 = _tau.p4()
             # print("stats for the tau in Botao", _tau_v4.Pt(), abs(_tau_v4.Eta()), self.deltaR2(signalMu_v4, _tau_v4) )   
             if (_tau_v4.Pt()) > 18 and (abs(_tau_v4.Eta()) < 2.3) and (self.deltaR2(signalMu_v4, _tau_v4) > deltaR2Thr):
-                if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017"):
+                if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017" or self.era == "2016"):
                     pass_mva_sel = (_tau.idDecayModeOldDMs > 0)  # idDecayModeOldDMs for nano V10 tau group tuple
                 else:
                     pass_mva_sel = (_tau.rawMVAoldDM2017v2 > 0)    # and tau.tauID("againstMuonLoose3") > 0.5f ?
                 pass_deep_sel = ( (_tau.rawDeepTau2017v2p1VSjet > 0) and (_tau.idDeepTau2017v2p1VSe > 0.5) and (_tau.idDeepTau2017v2p1VSmu > 0.5) )
                 if (pass_mva_sel or pass_deep_sel) and ( (pt not in best_tau.keys()) or (best_tau[pt].p4().Pt() < _tau.p4().Pt()) ):
                     best_tau[pt] = _tau
-                if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017"):
+                if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017"or self.era == "2016"):
                     if pass_mva_sel and ( (mva not in best_tau.keys()) or (best_tau[mva].idDecayModeOldDMs < _tau.idDecayModeOldDMs) ):
                         best_tau[mva] = _tau                    
                 else:
@@ -827,8 +827,8 @@ class tupleProducer(Module):
             has_reco_tau = False
         else:
             has_reco_tau = True
-        if has_reco_tau and best_tau is None:
-            print( "wtf???? ",tau.p4().Pt(), tau.p4().Eta(), self.deltaR2(signalMu_v4, tau.p4()), tau.p4().Phi(), tau.p4().M())
+        # if has_reco_tau and best_tau is None:
+        #     print( "wtf???? ",tau.p4().Pt(), tau.p4().Eta(), self.deltaR2(signalMu_v4, tau.p4()), tau.p4().Phi(), tau.p4().M())
         if gen_tau is None:
             has_gen_tau = False
         else:

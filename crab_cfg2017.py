@@ -5,7 +5,7 @@ config = Configuration()
 
 config.section_("General")
 config.General.requestName = 'DYJetsToTauTauToMuTauh_M-50_TuneCP5_13TeV-madgraphMLM-pythia8'
-config.General.workArea = "crab2017-0515"
+config.General.workArea = "crab2017-0912-DY1-test2"
 config.General.transferLogs = False
 config.section_("JobType")
 config.JobType.pluginName = 'Analysis'
@@ -20,7 +20,7 @@ config.JobType.sendPythonFolder = True
 config.JobType.allowUndistributedCMSSW = True
 
 config.section_("Data")
-config.Data.inputDataset = '/DYJetsToTauTauToMuTauh_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer19UL17NanoAODv2-106X_mc2017_realistic_v8-v1/NANOAODSIM'
+config.Data.inputDataset = '/DYJetsToTauTauToMuTauh_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIISummer20UL17NanoAODv9-106X_mc2017_realistic_v9-v2/NANOAODSIM'
 #config.Data.inputDBS = 'phys03'
 config.Data.inputDBS = 'global'
 #config.Data.splitting = 'Automatic'
@@ -35,8 +35,8 @@ config.Data.allowNonValidInputDataset = True
 config.Data.publication = False
 config.Data.outputDatasetTag = 'DYJetsToTauTauToMuTauh_M-50_TuneCP5_13TeV-madgraphMLM-pythia8'
 config.section_("Site")
-config.Site.storageSite = "T2_IT_Pisa"
-config.Site.whitelist = ["T2_IT_Pisa"]
+config.Site.storageSite = "T2_DE_DESY"
+config.Site.whitelist = ["T2_DE_DESY"]
 #config.Site.storageSite = "T2_CH_CERN"
 #config.section_("User")
 #config.User.voGroup = 'dcms'
