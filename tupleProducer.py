@@ -17,15 +17,12 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 import TriggerConfig
 
 class tupleProducer(Module):
-    def __init__(self, isMC, era):
+    def __init__(self, isMC, era, nanoVer):
         self.isMC = isMC
         self.era = era
         self.count = 0
-        self.nanoVer = 10
-        self.nanoVer = 10
-        self.nanoVer = 9
-        self.nanoVer = 10
-        self.nanoVer = 10
+        self.nanoVer = nanoVer
+        
         
         # producer hist
         self.producer_hist = R.TH1F('producer_selection','producer_selection',20,0,20)
@@ -182,6 +179,20 @@ class tupleProducer(Module):
         self.out.branch("best_tau_rawDeepTau2017v2p1VSe","F")
         self.out.branch("best_tau_rawDeepTau2017v2p1VSmu","F")
         self.out.branch("best_tau_rawDeepTau2017v2p1VSjet","F")
+        
+        self.out.branch("best_tau_idDeepTau2018v2p5VSe", "I")
+        self.out.branch("best_tau_idDeepTau2018v2p5VSmu", "I")
+        self.out.branch("best_tau_idDeepTau2018v2p5VSjet", "I")
+        self.out.branch("best_tau_rawDeepTau2018v2p5VSe", "F")
+        self.out.branch("best_tau_rawDeepTau2018v2p5VSmu", "F")
+        self.out.branch("best_tau_rawDeepTau2018v2p5VSjet", "F")
+
+        self.out.branch("second_tau_idDeepTau2018v2p5VSe", "I")
+        self.out.branch("second_tau_idDeepTau2018v2p5VSmu", "I")
+        self.out.branch("second_tau_idDeepTau2018v2p5VSjet", "I")
+        self.out.branch("second_tau_rawDeepTau2018v2p5VSe", "F")
+        self.out.branch("second_tau_rawDeepTau2018v2p5VSmu", "F")
+        self.out.branch("second_tau_rawDeepTau2018v2p5VSjet", "F")
 
         # test for input tree to get HLT result
         self.inTree = inputTree
@@ -563,16 +574,18 @@ class tupleProducer(Module):
         best_tau = dict()
         for _t, _tau in enumerate(taus):
             _tau_v4 = _tau.p4()
+            # print(self.nanoVer, "hi!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             # print("stats for the tau in Botao", _tau_v4.Pt(), abs(_tau_v4.Eta()), self.deltaR2(signalMu_v4, _tau_v4) )   
             if (_tau_v4.Pt()) > 18 and (abs(_tau_v4.Eta()) < 2.3) and (self.deltaR2(signalMu_v4, _tau_v4) > deltaR2Thr):
-                if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017" or self.era == "2016"):
+                if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017" or self.era == "2016" or self.nanoVer >= 11):
                     pass_mva_sel = (_tau.idDecayModeOldDMs > 0)  # idDecayModeOldDMs for nano V10 tau group tuple
                 else:
                     pass_mva_sel = (_tau.rawMVAoldDM2017v2 > 0)    # and tau.tauID("againstMuonLoose3") > 0.5f ?
                 pass_deep_sel = ( (_tau.rawDeepTau2017v2p1VSjet > 0) and (_tau.idDeepTau2017v2p1VSe > 0.5) and (_tau.idDeepTau2017v2p1VSmu > 0.5) )
                 if (pass_mva_sel or pass_deep_sel) and ( (pt not in best_tau.keys()) or (best_tau[pt].p4().Pt() < _tau.p4().Pt()) ):
                     best_tau[pt] = _tau
-                if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017"or self.era == "2016"):
+                
+                if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017"or self.era == "2016" or self.nanoVer >= 11):
                     if pass_mva_sel and ( (mva not in best_tau.keys()) or (best_tau[mva].idDecayModeOldDMs < _tau.idDecayModeOldDMs) ):
                         best_tau[mva] = _tau                    
                 else:
@@ -647,12 +660,18 @@ class tupleProducer(Module):
         # if len(taus) < 2:
         #     return taus, False
         # print("len(taus)",len(taus))
-
+        # print("signal muon pt eta phi: ",signalMu_v4.Pt(), signalMu_v4.Eta(), signalMu_v4.Phi())
         for _t, _tau in enumerate(taus):
-            # ntaus +=1
+            ntaus +=1
             _tau_v4 = _tau.p4()
+            # print("for the ",ntaus, " tau,  pt is : ", _tau_v4.Pt())
+            # print("for the ",ntaus, " tau,  Eta is : ", _tau_v4.Eta())
+            # print("for the ",ntaus, " tau,  Eta is : ", _tau_v4.Phi())
+            # print("for the ",ntaus, " tau,  deltaR is : ", self.deltaR2(signalMu_v4, _tau_v4))
+
             # print("stats for the tau", _tau_v4.Pt(), abs(_tau_v4.Eta()), self.deltaR2(signalMu_v4, _tau_v4) )    
-            if (_tau_v4.Pt()) > 18 and (abs(_tau_v4.Eta()) < 2.3) and (self.deltaR2(signalMu_v4, _tau_v4) > deltaR2Thr):
+            # if (_tau_v4.Pt()) > 18 and (abs(_tau_v4.Eta()) < 2.3) and (self.deltaR2(signalMu_v4, _tau_v4) > deltaR2Thr):
+            if (_tau_v4.Pt()) > 18 and (abs(_tau_v4.Eta()) < 2.3) :
                 ntaus_passed+=1
                 # print("iso: ", _tau.rawIso)
                 # if genleptons is None:
@@ -677,6 +696,7 @@ class tupleProducer(Module):
         #     second_best_tau = None
         # if best_tau is not None:
             # print( "best_tau.rawIso, second_best_tau.rawIso,",best_tau.rawIso, second_best_tau.rawIso,)
+        # print("ntaus_passed, ",ntaus_passed, "ntaus, ", ntaus )
         if ntaus_passed < 2:
             second_best_tau = None
         if second_best_tau is not None and best_tau is not None:
@@ -724,6 +744,7 @@ class tupleProducer(Module):
         jets = Collection(event, "Jet")
         met = Object(event, "MET")
         taus = Collection(event, "Tau")
+        
         #gendressedlep = Collection(event, "GenDressedLepton")    # gen leptons ?
         #gen_vis_taus = Collection(event, "GenVisTau")
         generator = Object(event, "Generator")
@@ -748,7 +769,13 @@ class tupleProducer(Module):
         sele_tau = None        
 
         self.fill_cut('total')
-
+        
+        ntaus =0
+        for _t, _tau in enumerate(taus):
+            ntaus +=1
+        if ntaus <2:
+            return False
+        self.fill_cut('has_two_tau')
         if self.isMC:
             pass
             #genWeight = ...
@@ -838,7 +865,13 @@ class tupleProducer(Module):
             return False
         self.fill_cut('has_tau')
         
+        if best_tau is  None:
+            return False
+        self.fill_cut('has_best_tau')
         # tau trigger match
+        if has_second_tau is None:
+            return False
+        self.fill_cut('has_second_tau')
         # TODO
         tau_ref_p4 = R.TLorentzVector()
         if has_reco_tau:
@@ -949,12 +982,12 @@ class tupleProducer(Module):
             self.out.fillBranch("tau_rawDeepTau2017v2p1VSjet", tau.rawDeepTau2017v2p1VSjet)
             self.out.fillBranch("tau_rawIso", tau.rawIso)
             
-            # self.out.fillBranch("tau_idDeepTau2018v2p5VSe", tau.idDeepTau2018v2p5VSe)
-            # self.out.fillBranch("tau_idDeepTau2018v2p5VSmu", tau.idDeepTau2018v2p5VSmu)
-            # self.out.fillBranch("tau_idDeepTau2018v2p5VSjet", tau.idDeepTau2018v2p5VSjet)
-            # self.out.fillBranch("tau_rawDeepTau2018v2p5VSe", tau.rawDeepTau2018v2p5VSe)
-            # self.out.fillBranch("tau_rawDeepTau2018v2p5VSmu", tau.rawDeepTau2018v2p5VSmu)
-            # self.out.fillBranch("tau_rawDeepTau2018v2p5VSjet", tau.rawDeepTau2018v2p5VSjet)
+            self.out.fillBranch("tau_idDeepTau2018v2p5VSe", tau.idDeepTau2018v2p5VSe)
+            self.out.fillBranch("tau_idDeepTau2018v2p5VSmu", tau.idDeepTau2018v2p5VSmu)
+            self.out.fillBranch("tau_idDeepTau2018v2p5VSjet", tau.idDeepTau2018v2p5VSjet)
+            self.out.fillBranch("tau_rawDeepTau2018v2p5VSe", tau.rawDeepTau2018v2p5VSe)
+            self.out.fillBranch("tau_rawDeepTau2018v2p5VSmu", tau.rawDeepTau2018v2p5VSmu)
+            self.out.fillBranch("tau_rawDeepTau2018v2p5VSjet", tau.rawDeepTau2018v2p5VSjet)
         else:
             self.out.fillBranch("tau_pt", -999.0)
             self.out.fillBranch("tau_eta", -999.0)
@@ -972,12 +1005,12 @@ class tupleProducer(Module):
             self.out.fillBranch("tau_rawDeepTau2017v2p1VSjet", -999.0)
             self.out.fillBranch("tau_rawIso", -999.0)
 
-            # self.out.fillBranch("tau_idDeepTau2018v2p5VSe", -999)
-            # self.out.fillBranch("tau_idDeepTau2018v2p5VSmu", -999)
-            # self.out.fillBranch("tau_idDeepTau2018v2p5VSjet", -999)
-            # self.out.fillBranch("tau_rawDeepTau2018v2p5VSe", -999.0)
-            # self.out.fillBranch("tau_rawDeepTau2018v2p5VSmu", -999.0)
-            # self.out.fillBranch("tau_rawDeepTau2018v2p5VSjet", -999.0)
+            self.out.fillBranch("tau_idDeepTau2018v2p5VSe", -999)
+            self.out.fillBranch("tau_idDeepTau2018v2p5VSmu", -999)
+            self.out.fillBranch("tau_idDeepTau2018v2p5VSjet", -999)
+            self.out.fillBranch("tau_rawDeepTau2018v2p5VSe", -999.0)
+            self.out.fillBranch("tau_rawDeepTau2018v2p5VSmu", -999.0)
+            self.out.fillBranch("tau_rawDeepTau2018v2p5VSjet", -999.0)
         if best_tau is not None:
             # print(best_tau)
             self.out.fillBranch("best_tau_pt", best_tau.p4().Pt())
@@ -995,6 +1028,12 @@ class tupleProducer(Module):
             self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSmu", best_tau.rawDeepTau2017v2p1VSmu)
             self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSjet", best_tau.rawDeepTau2017v2p1VSjet)
             self.out.fillBranch("best_tau_rawIso", best_tau.rawIso)
+            self.out.fillBranch("best_tau_idDeepTau2018v2p5VSe", best_tau.idDeepTau2018v2p5VSe)
+            self.out.fillBranch("best_tau_idDeepTau2018v2p5VSmu", best_tau.idDeepTau2018v2p5VSmu)
+            self.out.fillBranch("best_tau_idDeepTau2018v2p5VSjet", best_tau.idDeepTau2018v2p5VSjet)
+            self.out.fillBranch("best_tau_rawDeepTau2018v2p5VSe", best_tau.rawDeepTau2018v2p5VSe)
+            self.out.fillBranch("best_tau_rawDeepTau2018v2p5VSmu", best_tau.rawDeepTau2018v2p5VSmu)
+            self.out.fillBranch("best_tau_rawDeepTau2018v2p5VSjet", best_tau.rawDeepTau2018v2p5VSjet)
         else:
             # print("best_tau is None", best_tau)
             self.out.fillBranch("best_tau_pt",-999.0)
@@ -1030,6 +1069,13 @@ class tupleProducer(Module):
             self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSmu", second_tau.rawDeepTau2017v2p1VSmu)
             self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSjet", second_tau.rawDeepTau2017v2p1VSjet)
             self.out.fillBranch("second_tau_rawIso", second_tau.rawIso)
+            
+            self.out.fillBranch("second_tau_idDeepTau2018v2p5VSe", second_tau.idDeepTau2018v2p5VSe)
+            self.out.fillBranch("second_tau_idDeepTau2018v2p5VSmu", second_tau.idDeepTau2018v2p5VSmu)
+            self.out.fillBranch("second_tau_idDeepTau2018v2p5VSjet", second_tau.idDeepTau2018v2p5VSjet)
+            self.out.fillBranch("second_tau_rawDeepTau2018v2p5VSe", second_tau.rawDeepTau2018v2p5VSe)
+            self.out.fillBranch("second_tau_rawDeepTau2018v2p5VSmu", second_tau.rawDeepTau2018v2p5VSmu)
+            self.out.fillBranch("second_tau_rawDeepTau2018v2p5VSjet", second_tau.rawDeepTau2018v2p5VSjet)
 
 
         else:
@@ -1048,7 +1094,13 @@ class tupleProducer(Module):
             self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSmu", -999.0)
             self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSjet", -999.0)
             self.out.fillBranch("second_tau_rawIso", -999.0)
-        
+            
+            self.out.fillBranch("second_tau_idDeepTau2018v2p5VSe", -999)
+            self.out.fillBranch("second_tau_idDeepTau2018v2p5VSmu", -999)
+            self.out.fillBranch("second_tau_idDeepTau2018v2p5VSjet", -999)
+            self.out.fillBranch("second_tau_rawDeepTau2018v2p5VSe", -999.0)
+            self.out.fillBranch("second_tau_rawDeepTau2018v2p5VSmu", -999.0)
+            self.out.fillBranch("second_tau_rawDeepTau2018v2p5VSjet", -999.0)
     
 
         # fill visible mass
@@ -1101,10 +1153,14 @@ class tupleProducer(Module):
 
 # define modules using the syntax 'name = lambda : constructor' to avoid having them loaded when not needed
 
-tuple2016MC = lambda : tupleProducer(True,"2016")
-tuple2017MC = lambda : tupleProducer(True,"2017")
-tuple2018MC = lambda : tupleProducer(True,"2018")
-tuple2016data = lambda : tupleProducer(False,"2016")
-tuple2017data = lambda : tupleProducer(False,"2017")
-tuple2018data = lambda : tupleProducer(False,"2018")
+tuple2016MC = lambda : tupleProducer(True,"2016",10)
+tuple2017MC = lambda : tupleProducer(True,"2017",9)
+tuple2018MC = lambda : tupleProducer(True,"2018",10)
+tuple2022MC = lambda : tupleProducer(True,"2022", 11)
+tuple2016data = lambda : tupleProducer(False,"2016",10)
+tuple2017data = lambda : tupleProducer(False,"2017",10)
+tuple2018data = lambda : tupleProducer(False,"2018",10)
+tuple2022data = lambda : tupleProducer(False,"2022", 11)
+tuple2023data = lambda : tupleProducer(False,"2023", 13)
+
 
