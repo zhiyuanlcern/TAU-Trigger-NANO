@@ -251,6 +251,22 @@ bool PassMuTauTrig(UInt_t ntrig,Vec_i trig_id,Vec_i trig_bits,Vec_t trig_pt,Vec_
   }
   return false;
 }
+
+// Nano v13 
+// why do people change filter bits for every nanoAOD version?????
+// 0 => Loose, 1 => Medium, 2 => Tight, 3 => DeepTau no spec WP, 4 => ChargedIso, 5 => HPS, 
+// 6 => e-tau inside filter, 7 => mu-tau inside filter, 8 => single-tau inside filter, 9 => VBF matching, 10 => di-tau, 11 => e-tau, 12 => mu-tau, 
+// 13 => di-tau + PFJet, 14 => e-tau displaced, 15 => mu-tau displaced, 16 => di-tau displaced, 17 => Monitoring, 18 => MonitoringForVBFIsoTau, 
+// 19 => 'Monitoring di-tau + PFJet, 20 => 'Monitoring muTau displaced, 21 => OneProng, 22 => DiJetCorr, 23 => OverlapFilter, 24 => Dxy, 25 => MatchL1HLT, 
+// 26 => MatchL1HLT, 27 => VBF + DoubleTau Monitoring, 28 => For matching to monitoring trigger for 20 GeV tau leg of VBF triggers, 29 => single PF-tau inside filter for Tau
+
+// 10, 11, 12 -> ditau 1024,  etau and mutau 4096
+// 6, 7, 8 -> 64, 128, 256
+// 13 ditau PFJet 8192, 19 'Monitoring di-tau + PFJet,
+// 28 For matching to monitoring trigger for 20 GeV tau leg of VBF triggers ? 268435456
+// 29 -> single PF-tau inside filter for Tau 536870912
+
+
 bool PassMuTauTrig_lowpT_byNanoVer(UInt_t ntrig,Vec_i trig_id,Vec_i trig_bits,Vec_t trig_pt,Vec_t trig_eta,Vec_t trig_phi,float tau_pt,float tau_eta,float tau_phi, UInt_t nano_ver){
   if (tau_pt <= 0)
     return false;
@@ -263,31 +279,20 @@ bool PassMuTauTrig_lowpT_byNanoVer(UInt_t ntrig,Vec_i trig_id,Vec_i trig_bits,Ve
     const ROOT::Math::PtEtaPhiMVector trig(trig_pt[it],trig_eta[it],trig_phi[it],0);
     float dR = deltaR(trig.Eta(),tau_eta,trig.Phi(),tau_phi);
     if (dR < 0.5){ //dR < 0.5
-      if((trig_bits[it] & trig_bits_byNanoVer) != 0 && trig_id[it] == 15 && trig_pt[it] > 20){ 
+      if( nano_ver <= 12){
+        if((trig_bits[it] & trig_bits_byNanoVer) != 0 && trig_id[it] == 15 && trig_pt[it] > 20){ 
+            return true;
+        }
+      }
+      else{
+        // specifically for nano v13
+        if((trig_bits[it] & (1<<7)) != 0 && (trig_bits[it] & (1<<26)) != 0 && trig_id[it] == 15){ 
           return true;
+      }  
       }
     }
   }
   return false;
-}
-bool PassMuTauTrig_lowpT_byNanoVer_muon(UInt_t ntrig,Vec_i trig_id,Vec_i trig_bits,Vec_t trig_pt,Vec_t trig_eta,Vec_t trig_phi,float tau_pt,float tau_eta,float tau_phi, UInt_t nano_ver){
-  if (tau_pt <= 0)
-    return false;
-  int trig_bits_byNanoVer = 10;
-  if (nano_ver <= 9) trig_bits_byNanoVer = 64;
-  else if (nano_ver >= 10) trig_bits_byNanoVer = 64;
-  else return false;
-
-  for(int it=0; it < ntrig; it++){
-    const ROOT::Math::PtEtaPhiMVector trig(trig_pt[it],trig_eta[it],trig_phi[it],0);
-    float dR = deltaR(trig.Eta(),tau_eta,trig.Phi(),tau_phi);
-    if (dR < 0.5){ //dR < 0.5
-      if((trig_bits[it] & trig_bits_byNanoVer) != 0 && trig_id[it] == 13 && trig_pt[it] > 20){ 
-          return true;
-      }
-    }
-  }
-  return 0;
 }
 bool PassMuTauTrig_lowpT(UInt_t ntrig,Vec_i trig_id,Vec_i trig_bits,Vec_t trig_pt,Vec_t trig_eta,Vec_t trig_phi,float tau_pt,float tau_eta,float tau_phi){
   if (tau_pt <= 0)
@@ -323,6 +328,29 @@ bool PassMuTauTrig_lowpT_v9(UInt_t ntrig,Vec_i trig_id,Vec_i trig_bits,Vec_t tri
 
 // (trig_bits[it] & 512) != 0 && trig_id[it] == 15 && trig_pt[it] > 27
 
+bool PassElTauTrig_byNanoVer(UInt_t ntrig,Vec_t trig_l1pt,Vec_i trig_l1iso,Vec_i trig_id,Vec_i trig_bits,Vec_t trig_pt,Vec_t trig_eta,Vec_t trig_phi,float tau_pt,float tau_eta,float tau_phi, UInt_t nano_ver){
+  if (tau_pt <= 0)
+    return false;
+  for(int it=0; it < ntrig; it++){
+    const ROOT::Math::PtEtaPhiMVector trig(trig_pt[it],trig_eta[it],trig_phi[it],0);
+    float dR = deltaR(trig.Eta(),tau_eta,trig.Phi(),tau_phi);
+    if (dR < 0.5){ //dR < 0.5
+      if( nano_ver <= 12){
+        if((trig_bits[it] & 512) != 0 && trig_id[it] == 15){ 
+            if(trig_l1pt[it] > 26 && trig_l1iso[it] > 0 && trig_pt[it] > 30)
+              return true;
+        }
+      }
+      else {
+        if((trig_bits[it] & (1<<6)) != 0 && (trig_bits[it] & (1<<26)) != 0 && trig_id[it] == 15 && trig_pt[it] > 30 && trig_l1iso[it] > 0 && trig_l1pt[it] > 26){ 
+          return true;
+      }  
+    }
+  }
+  return false;
+}
+
+
 bool PassElTauTrig(UInt_t ntrig,Vec_t trig_l1pt,Vec_i trig_l1iso,Vec_i trig_id,Vec_i trig_bits,Vec_t trig_pt,Vec_t trig_eta,Vec_t trig_phi,float tau_pt,float tau_eta,float tau_phi){
   if (tau_pt <= 0)
     return false;
@@ -339,6 +367,29 @@ bool PassElTauTrig(UInt_t ntrig,Vec_t trig_l1pt,Vec_i trig_l1iso,Vec_i trig_id,V
   return false;
 }
 // TrigObj_id==15 && (TrigObj_filterBits&256)!=0
+
+bool PassDiTauTrig_byNanoVer(UInt_t ntrig,Vec_i trig_id,Vec_i trig_bits,Vec_t trig_pt,Vec_t trig_eta,Vec_t trig_phi,float tau_pt,float tau_eta,float tau_phi,UInt_t nano_ver){
+  if (tau_pt <= 0)
+    return false;
+  for(int it=0; it < ntrig; it++){
+    const ROOT::Math::PtEtaPhiMVector trig(trig_pt[it],trig_eta[it],trig_phi[it],0);
+    float dR = deltaR(trig.Eta(),tau_eta,trig.Phi(),tau_phi);
+    if (dR < 0.5){ //dR < 0.5
+      if( nano_ver <= 12){
+        if((trig_bits[it] & 512) != 0 && (trig_bits[it] & 1024) != 0){ 
+            return true;
+        }
+      }
+      else{
+        if((trig_bits[it] & (1<<1)) != 0 && (trig_bits[it] & (1<<17)) != 0 && (trig_id[it] == 15 && trig_pt[it] > 35)){ 
+          // if ( (trig_l1iso[it] > 0 && trig_l1pt[it] > 32) || trig_l1pt[it] > 70 ) {
+            return true;
+        }
+      }  
+    }
+  }
+  return false;
+}
 
 bool PassDiTauTrig(UInt_t ntrig,Vec_i trig_id,Vec_i trig_bits,Vec_t trig_pt,Vec_t trig_eta,Vec_t trig_phi,float tau_pt,float tau_eta,float tau_phi){
   if (tau_pt <= 0)

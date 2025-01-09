@@ -68,7 +68,7 @@ class selectionFilter(Module):
             _mu_v4 = _muon.p4()
             if (_muon.mediumId) and (_mu_v4.Pt() > 24) and (abs(_mu_v4.Eta()) < 2.1) :
                 muon_sel.append( (_mu_v4, _muon, _m) )
-        if (self.era == "2018" or self.nanoVer == 10):
+        if (self.era == "2018" or self.nanoVer >= 10):
             muon_sel.sort(key=lambda x:(x[1].pfRelIso04_all, x[0].Pt()) ,reverse=True)
         else:
             muon_sel.sort(key=lambda x:(x[1].miniIsoId, x[0].Pt()) ,reverse=True)
@@ -130,6 +130,18 @@ class selectionFilter(Module):
                 if (_ele_v4.Pt() > 10) and (abs(_ele_v4.Eta()) < 2.5) and (_ele.mvaIso_WPL > 0.5):
                     has_ele = True
                     break
+        elif (self.era == "2022"):
+            for _ele in electrons:
+                _ele_v4 = _ele.p4()
+                if (_ele_v4.Pt() > 10) and (abs(_ele_v4.Eta()) < 2.5) and (_ele.mvaIso_WP90 > 0.5):
+                    has_ele = True
+                    break
+        elif (self.era == "2023"):
+            for _ele in electrons:
+                _ele_v4 = _ele.p4()
+                if (_ele_v4.Pt() > 10) and (abs(_ele_v4.Eta()) < 2.5) and (_ele.mvaIso_WP90 > 0.5):
+                    has_ele = True
+                    break
         else:
             for _ele in electrons:
                 _ele_v4 = _ele.p4()
@@ -176,15 +188,15 @@ class selectionFilter(Module):
             self.fill_cut('signal_muon')
             if not has_other_muon:
                 self.fill_cut('muon_veto')
-                if not has_ele:
-                    self.fill_cut('ele_veto')
-                    if pass_MET_filter:
-                        self.fill_cut('met_filters')
-                        if not MT_Cut:
-                            self.fill_cut('MT_Cut')
-                            if not has_bjet:
-                                self.fill_cut('btag_veto')
-                                return True
+                # if not has_ele:
+                #     self.fill_cut('ele_veto')
+                    # if pass_MET_filter:
+                    #     self.fill_cut('met_filters')
+                    #     if not MT_Cut:
+                    #         self.fill_cut('MT_Cut')
+                    #         if not has_bjet:
+                    #             self.fill_cut('btag_veto')
+                return True
         
 
 # define modules using the syntax 'name = lambda : constructor' to avoid having them loaded when not needed
@@ -192,7 +204,11 @@ class selectionFilter(Module):
 selection2016MC = lambda : selectionFilter(True,"2016")
 selection2017MC = lambda : selectionFilter(True,"2017")
 selection2018MC = lambda : selectionFilter(True,"2018")
+selection2022MC = lambda : selectionFilter(True,"2022")
+selection2023MC = lambda : selectionFilter(True,"2023")
 selection2016data = lambda : selectionFilter(False,"2016")
 selection2017data = lambda : selectionFilter(False,"2017")
 selection2018data = lambda : selectionFilter(False,"2018")
+selection2022data = lambda : selectionFilter(False,"2022")
+selection2023data = lambda : selectionFilter(False,"2023")
 
