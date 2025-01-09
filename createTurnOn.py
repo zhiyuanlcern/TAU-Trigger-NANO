@@ -19,6 +19,7 @@ parser.add_argument('--decay-modes', required=False, type=str, default='all,0,1,
 parser.add_argument('--working-points', required=False, type=str,
                     default='VVVLoose,VVLoose,VLoose,Loose,Medium,Tight,VTight,VVTight',
                     help="working points to process")
+parser.add_argument('--deeptau-ver', required=True, type=str, default='2p1', help="deeptau version provided: 2p1 or 2p5")
 args = parser.parse_args()
 
 path_prefix = '' if 'TAU-Trigger-NANO' in os.getcwd() else 'TAU-Trigger-NANO/'
@@ -32,14 +33,13 @@ ROOT.TH1.SetDefaultSumw2()
 RootPlotting.ApplyDefaultGlobalStyle()
 
 bin_scans = {
-    # 2:  [ 0.01 ],
-    # 5:  [ 0.01, 0.05 ],
-    10: [ 0.05, 0.1 ],
-    20: [  0.2 ],
-    50: [ 0.2,0.3],
+    1:  [0.05],
+    2:  [ 0.05 ],
+    5:  [ 0.01, 0.05,0.1 ],
+    10: [ 0.05, 0.1,0.2 ],
+    20: [ 0.1, 0.2,0.4 ],
+    50: [ 0.2, 0.4 ],
     100: [ 0.4 ],
-    # 400: [0.4],
-    
 }
 bin_scan_pairs = []
 for max_bin_delta_pt, max_rel_err_vec in bin_scans.items():
@@ -91,17 +91,18 @@ def CreateHistograms(input_file, channels, decay_modes, discr_name, working_poin
         for wp in working_points:
             wp_bit = ParseEnum(DiscriminatorWP, wp)
             # df_wp = df_dm.Filter('({} & (1 << {})) != 0'.format(discr_name, wp_bit))
-            df_wp = df_dm.Filter('{0} >= {1}'.format(discr_name, wp_bit))
-
+            df_wp = df_dm.Filter('{0} >= {1}'.format(discr_name, wp_bit)).Filter("muon_pt > 27 && best_tau_pt > 20 &&  muon_mt < 30 && pass_mutau_muon > 0.5")
+            
             turnOn_data[dm][wp] = {}
             for channel in channels:
                 turnOn_data[dm][wp][channel] = {}
                 if args.conditional:
-                    df_wp  = df_wp.Filter("pass_{}".format(channel)) ## denominator: events passing mutau
-                    df_ch = df_wp.Filter('pass_{}_second_tau_given > 0.5'.format(channel)) ## numerator: events passing mutau and second tau passing mutau
+                    # df_wp = df_wp.Redefine("pass_mutau_tag", "pass_mutau_tag > 0.5 && ")
+                    df_wp  = df_wp.Filter("pass_{}_tag > 0.5 ".format(channel)) ## denominator: events passing mutau
+                    df_ch = df_wp.Filter('pass_{}_probe > 0.5 '.format(channel)) ## numerator: events passing mutau and second tau passing mutau
                 else:    
-                    # df_wp  = df_wp.Filter("pass_{}".format(channel)) ## denominator: events passing mutau
-                    df_ch = df_wp.Filter('pass_{}_second_tau > 0.5'.format(channel)) ## numerator: events passing mutau and second tau passing mutau
+                    # df_wp  = df_wp.Filter("best_tau_rawIso < 5") ## denominator: events passing mutau
+                    df_ch = df_wp.Filter('(pass_{}_probe > 0.5 ) '.format(channel)) ## numerator: events passing mutau and second tau passing mutau
                 for model_name, hist_model in hist_models.items():
                     print("now running for model_name, hist_model: ", model_name, hist_model)
                     turn_on = TurnOnData()
@@ -155,10 +156,11 @@ def CreateHistograms(input_file, channels, decay_modes, discr_name, working_poin
     return turnOn_data
 
 output_file = ROOT.TFile(args.output + '.root', 'RECREATE')
-input_files = [ args.input_data, args.input_dy_mc ]
+input_files = [ args.input_dy_mc , args.input_data, ]
 n_inputs = len(input_files)
-labels = [ 'data', 'mc' ]
-var = 'tau_pt'
+labels = [ 'mc','data',  ]
+var = 'second_tau_pt'
+
 title, x_title = '#tau p_{T}', '#tau p_{T} (GeV)'
 decay_modes = args.decay_modes.split(',')
 channels = args.channels.split(',')
@@ -170,9 +172,16 @@ hist_models = {
     'fit': ROOT.RDF.TH1DModel(var, var, len(bins_fit) - 1, array('d', bins_fit))
 }
 turnOn_data = [None] * n_inputs
+if args.deeptau_ver == "2p1":
+    deeptau_var = "second_tau_idDeepTau2017v2p1VSjet"
+elif args.deeptau_ver == "2p5":
+    deeptau_var = "second_tau_idDeepTau2018v2p5VSjet"
+else:
+    print("wrong deeptau version provided: either 2p1 or 2p5")
+    exit(-1)
 for input_id in range(n_inputs):
     print("Creating {} histograms...".format(labels[input_id]))
-    turnOn_data[input_id] = CreateHistograms(input_files[input_id], channels, decay_modes, 'second_tau_idDeepTau2017v2p1VSjet', #'tau_idDeepTau2018v2p5VSjet',
+    turnOn_data[input_id] = CreateHistograms(input_files[input_id], channels, decay_modes, deeptau_var, #'tau_idDeepTau2018v2p5VSjet',
                                              working_points, hist_models, labels[input_id], var, output_file)
 
 colors = [ ROOT.kRed, ROOT.kBlack ]

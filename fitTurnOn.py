@@ -39,10 +39,11 @@ def MinTarget(dy, eff):
 class FitResults:
     def __init__(self, eff, x_pred):
         kernel_high = ConstantKernel()
-        kernel_low = ConstantKernel() * Matern(nu=1, length_scale_bounds=(1, 300), length_scale=20)
+        kernel_low = ConstantKernel() * Matern(nu=1, length_scale_bounds=(10, 100), length_scale=20)
         N = eff.x.shape[0]
+        print(eff.x, "eff.x at begining")
         res = scipy.optimize.minimize(MinTarget, np.zeros(N), args=(eff,), bounds = [ [0, 1] ] * N,
-                                      options={"maxfun": int(1e6), "maxiter": 10000000}, )
+                                      options={"maxfun": int(1e6)}, )
         if not res.success:
             print(res)
             raise RuntimeError("Unable to prefit")
@@ -65,23 +66,24 @@ class FitResults:
                 self.pt_start_flat = eff.x[N-n-1]
                 best_chi2_ndof = chi2_ndof
         if best_chi2_ndof > 20:
-            print("Unable to determine the high pt region")
+            print("Unable to determine the high pt region, best_chi2:  ", best_chi2_ndof)
             self.pt_start_flat = eff.x[-1]
 
         low_pt = eff.x <= self.pt_start_flat
         high_pt = eff.x >= self.pt_start_flat
         
         from scipy.optimize import fmin_l_bfgs_b
-
-        def custom_optimizer(obj_func, initial_theta, bounds):
-            # Wrap around the 'fmin_l_bfgs_b' optimizer
-            theta_opt, func_min, info = fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds, maxiter=100)
-            return theta_opt, func_min
+        self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, n_restarts_optimizer=10)
+        # def custom_optimizer(obj_func, initial_theta, bounds):
+        #     # Wrap around the 'fmin_l_bfgs_b' optimizer
+        #     theta_opt, func_min, info = fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds, maxiter=100)
+        #     return theta_opt, func_min
 
         # Use the custom optimizer in GaussianProcessRegressor
-        self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, optimizer=custom_optimizer)
+        # self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, optimizer=custom_optimizer)
         self.gp_high.fit(np.atleast_2d(eff.x[high_pt]).T, eff.y[high_pt])
-        self.gp_low = GaussianProcessRegressor(kernel=kernel_low, alpha=np.append([0], yerr[low_pt] ** 2),optimizer=custom_optimizer)
+        self.gp_low = GaussianProcessRegressor(kernel=kernel_low, alpha=np.append([0], yerr[low_pt] ** 2),
+                                               n_restarts_optimizer=10)
         self.gp_low.fit(np.atleast_2d(np.append([10], eff.x[low_pt])).T, np.append([0], eff.y[low_pt]))
 
         # self.gp_high = GaussianProcessRegressor(kernel=kernel_high, alpha=yerr[high_pt] ** 2, n_restarts_optimizer=10)
@@ -96,7 +98,8 @@ class FitResults:
         for n in range(N):
             idx = np.argmin(abs(x_pred - eff.x[n]))
             sigma_orig[n] = sigma_pred[idx]
-
+        print("sigma_orig" ,sigma_orig )
+        print(eff.x, "eff.x")
         interp_kind = 'linear'
         sp = interpolate.interp1d(eff.x, sigma_orig, kind=interp_kind, fill_value="extrapolate")
         sigma_interp = sp(x_pred)
@@ -139,6 +142,7 @@ for channel in channels:
                 name_pattern = '{{}}_{}_{}{}_fit_eff'.format(channel, wp, dm_label)
                 dm_label = '_dm'+ dm if len(dm) > 0 else ''
                 eff_data_root = file.Get(name_pattern.format('data'))
+                print("reading file ", name_pattern.format('data'))
                 eff_mc_root = file.Get(name_pattern.format('mc'))
                 eff_data = Graph(root_graph=eff_data_root)
                 eff_mc = Graph(root_graph=eff_mc_root)
@@ -147,7 +151,8 @@ for channel in channels:
                 #x_high = max(eff_data.x[-1] + eff_data.x_error_high[-1], eff_mc.x[-1] + eff_mc.x_error_high[-1])
                 x_low, x_high = 20, 1000
                 x_pred = np.arange(x_low, x_high + pred_step / 2, pred_step)
-
+                print(eff_data.x, "eff_data.x")
+                print(eff_mc.x, "eff_mc.x")
                 eff_data_fitted = FitResults(eff_data, x_pred)
                 eff_mc_fitted = FitResults(eff_mc, x_pred)
 
@@ -218,7 +223,7 @@ for channel in channels:
                 ax.set_title(title, fontsize=16)
                 ax.set_ylabel("Efficiency", fontsize=12)
                 ax.set_ylim([ 0., 1.1 ])
-                ax.set_xlim([ 20, min(250, plt.xlim()[1]) ])
+                ax.set_xlim([ 20, min(200, plt.xlim()[1]) ])
 
                 ax_ratio.set_xlabel("$p_T$ (GeV)", fontsize=12)
                 ax_ratio.set_ylabel("Data/MC SF", fontsize=12)
