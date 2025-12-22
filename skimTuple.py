@@ -16,18 +16,15 @@ parser.add_argument('--config', required=False, type=str, help="config with trig
 parser.add_argument('--selection', required=True, type=str, help="tau selection")
 parser.add_argument('--output', required=True, type=str, help="output file")
 parser.add_argument('--type', required=True, type=str, help="data or mc")
-parser.add_argument('--pu', required=False, type=str, default=None,
+parser.add_argument('--pudata', required=False, type=str, default=None,
+                    help="file with the pileup profile for the data taking period")
+parser.add_argument('--pumc', required=False, type=str, default=None,
                     help="file with the pileup profile for the data taking period")
 parser.add_argument('--era', required=True, type=int, default=2018,
                     help="data taking period")
 parser.add_argument('--nanoVer', required=True, type=int, default=11,
                     help="data taking period")
 
-
-parser.add_argument('--era', required=True, type=int, default=2018,
-                    help="data taking period")
-parser.add_argument('--nanoVer', required=True, type=int, default=11,
-                    help="data taking period")
 
 
 args = parser.parse_args()
@@ -48,15 +45,16 @@ if args.type not in ['data', 'mc']:
 MC_without_pu = False
 input_vec = ListToStdVector(args.input)
 if args.type == 'mc':
-    if args.pu is None:
-        print("RuntimeWarning: Pileup file should be provided for mc!!!!!!!!")
-        MC_without_pu =  True
-    else:
-        data_pu_file = ROOT.TFile(args.pu, 'READ')
-        data_pu = data_pu_file.Get('pileup')
-        df_all = ROOT.RDataFrame('Events', input_vec)
-        mc_pu = df_all.Histo1D(ROOT.RDF.TH1DModel(data_pu), 'npu')
-        ROOT.PileUpWeightProvider.Initialize(data_pu, mc_pu.GetPtr())
+    if args.pudata is None or args.pumc is None:
+        raise RuntimeError("Pileup file should be provided for mc.")
+    data_pu_file = ROOT.TFile(args.pudata, 'READ')
+    data_pu = data_pu_file.Get('pileup')
+    df_all = ROOT.RDataFrame('Events', input_vec)
+    mc_pu_file = ROOT.TFile(args.pumc, 'READ')
+    mc_pu = mc_pu_file.Get('pileup')
+    # mc_pu = df_all.Histo1D(ROOT.RDF.TH1DModel(data_pu), 'npu')
+    # ROOT.PileUpWeightProvider.Initialize(data_pu, mc_pu.GetPtr())
+    ROOT.PileUpWeightProvider.Initialize(data_pu, mc_pu)
 
 
 selection_id = ParseEnum(TauSelection, args.selection)
@@ -89,13 +87,9 @@ if args.type == 'mc':
         df = df.Define('weight', "1.0")    
     else:
         df = df.Define('weight', "PileUpWeightProvider::GetDefault().GetWeight(npu) * 1.0")
-    # df = df.Filter('second_tau_charge + muon_charge == 0') ## no cuts should be applied on the true gen flavour for factorisation study ## don't cut on charge
-    if MC_without_pu:
-        df = df.Define('weight', "1.0")    
-    else:
-        df = df.Define('weight', "PileUpWeightProvider::GetDefault().GetWeight(npu) * 1.0")
+        # df = df.Define('weight', " 1.0")
+        
 else:
-    df = df.Define('weight', "1.")
     df = df.Define('weight', "1.")
 
 print("finished defining weight")
@@ -106,11 +100,7 @@ skimmed_branches = [
         'best_tau_rawIso', 'second_tau_rawIso',
         'muon_pt', 'muon_mt', 'muon_iso', 'muon_phi', 'muon_eta'
 ]
-if args.era >= 2022:
-    skimmed_branches.append('best_tau_idDeepTau2018v2p5VSjet')
-    skimmed_branches.append('best_tau_idDeepTau2018v2p5VSmu')
-    skimmed_branches.append('second_tau_idDeepTau2018v2p5VSjet')
-    skimmed_branches.append('second_tau_idDeepTau2018v2p5VSmu')
+
 triggers = {
     2018: {
         "mutau_trigger" : "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1",
@@ -129,59 +119,7 @@ triggers = {
         "etau_trigger": "HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
         "ditau_trigger_monitor": "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
         "ditau_trigger": "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
-    }
-    
-}
-df = df.Define("pass_mutau_tag", f"PassMuTauTrig_lowpT_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi, {args.nanoVer}) && {triggers[args.era]['mutau_trigger']} == 1")
-df = df.Define("pass_mutau_probe", f"PassMuTauTrig_lowpT_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi, {args.nanoVer}) && {triggers[args.era]['mutau_trigger']} == 1")
-df = df.Define("pass_mutau_muon", f"PassMuTauTrig_lowpT_byNanoVer_muon(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, muon_pt, muon_eta, muon_phi, {args.nanoVer}) ")
-
-
-df = df.Define("pass_etau", f"PassElTauTrig(nTrigObj, TrigObj_l1pt, TrigObj_l1iso, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, tau_pt, tau_eta, tau_phi) && {triggers[args.era]['etau_trigger']} == 1")
-if args.era >= 2022:
-    df = df.Define("pass_ditau_tag", f"PassDiTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi) && {triggers[args.era]['ditau_trigger']} == 1")
-    df = df.Define("pass_ditau_probe", f"PassDiTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi) && {triggers[args.era]['ditau_trigger']} == 1")
-df = df.Define("pass_ditau_tag_monitor", f"PassDiTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi) && {triggers[args.era]['ditau_trigger_monitor']} == 1")
-df = df.Define("pass_ditau_probe_monitor", f"PassDiTauTrig(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi) && {triggers[args.era]['ditau_trigger_monitor']} == 1")
-
-df = df.Define("pass_mutau_second_tau", f"PassMuTauTrig_lowpT_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi,{args.nanoVer}) " ) 
-
-df = df.Define("pass_mutau_second_tau_given", f"PassMuTauTrig_lowpT_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi,{args.nanoVer}) && pass_mutau_tag > 0.5 " ) 
-
-skimmed_branches.append("pass_mutau_tag")
-skimmed_branches.append("pass_mutau_probe")
-skimmed_branches.append("pass_mutau_muon")
-skimmed_branches = [
-        'tau_pt', 'tau_eta', 'tau_phi', 'tau_mass', 'tau_charge', 'tau_decayMode', 'best_tau_idDeepTau2017v2p1VSjet', 'weight', 'best_tau_idDeepTau2017v2p1VSmu',
-        'second_tau_pt', 'second_tau_eta', 'second_tau_phi', 'second_tau_mass', 'second_tau_charge', 'second_tau_decayMode','second_tau_idDeepTau2017v2p1VSjet', 'second_tau_idDeepTau2017v2p1VSmu',
-        'best_tau_pt', 'best_tau_eta', 'best_tau_phi', 'best_tau_mass', 'best_tau_charge', 'best_tau_decayMode',  
-        'best_tau_rawIso', 'second_tau_rawIso',
-        'muon_pt', 'muon_mt', 'muon_iso', 'muon_phi', 'muon_eta'
-]
-if int(args.era) >= 2022:
-    skimmed_branches.append('best_tau_idDeepTau2018v2p5VSjet')
-    skimmed_branches.append('best_tau_idDeepTau2018v2p5VSmu')
-    skimmed_branches.append('second_tau_idDeepTau2018v2p5VSjet')
-    skimmed_branches.append('second_tau_idDeepTau2018v2p5VSmu')
-triggers = {
-    2018: {
-        "mutau_trigger" : "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1",
-        "etau_trigger" : "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTauHPS27_eta2p1_CrossL1",
-        "ditau_trigger" : "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg_CrossL1"    ,
-        "ditau_trigger_monitor": "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTauHPS35_Trk1_eta2p1_Reg_CrossL1",
     },
-    2017 : {
-        "mutau_trigger" : "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1",
-        "etau_trigger" : "HLT_IsoMu20_eta2p1_LooseChargedIsoPFTau27_eta2p1_CrossL1",
-        "ditau_trigger" : "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_CrossL1"    ,
-        "ditau_trigger_monitor": "HLT_IsoMu24_eta2p1_MediumChargedIsoPFTau35_Trk1_TightID_eta2p1_Reg_CrossL1",
-    },
-    2022: {
-        "mutau_trigger": "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS20_eta2p1_SingleL1",
-        "etau_trigger": "HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
-        "ditau_trigger_monitor": "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS35_L2NN_eta2p1_CrossL1",
-        "ditau_trigger": "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1",
-    }
     2023: {
         "mutau_trigger": "HLT_IsoMu24_eta2p1_MediumDeepTauPFTauHPS20_eta2p1_SingleL1",
         "etau_trigger": "HLT_IsoMu20_eta2p1_LooseDeepTauPFTauHPS27_eta2p1_CrossL1",
@@ -192,18 +130,33 @@ triggers = {
 }
 df = df.Define("pass_mutau_tag", f"PassMuTauTrig_lowpT_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi, {args.nanoVer}) && {triggers[args.era]['mutau_trigger']} == 1")
 df = df.Define("pass_mutau_probe", f"PassMuTauTrig_lowpT_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi, {args.nanoVer}) && {triggers[args.era]['mutau_trigger']} == 1")
-
+df = df.Define("pass_mutau_muon", f"PassMuTauTrig_lowpT_byNanoVer_muon(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, muon_pt, muon_eta, muon_phi, {args.nanoVer}) ")
 df = df.Define("pass_etau", f"PassElTauTrig_byNanoVer(nTrigObj, TrigObj_l1pt, TrigObj_l1iso, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, tau_pt, tau_eta, tau_phi,{args.nanoVer}) && {triggers[args.era]['etau_trigger']} == 1")
-if int(args.era) >= 2022:
-    df = df.Define("pass_ditau_tag", f"PassDiTauTrig_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi,{args.nanoVer}) && {triggers[args.era]['ditau_trigger']} == 1")
-    df = df.Define("pass_ditau_probe", f"PassDiTauTrig_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi,{args.nanoVer}) && {triggers[args.era]['ditau_trigger']} == 1")
+
+
+df = df.Define("pass_ditau_tag", f"PassDiTauTrig_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi,{args.nanoVer}) && {triggers[args.era]['ditau_trigger']} == 1")
+df = df.Define("pass_ditau_probe", f"PassDiTauTrig_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi,{args.nanoVer}) && {triggers[args.era]['ditau_trigger']} == 1")
+
+
+
 df = df.Define("pass_ditau_tag_monitor", f"PassDiTauTrig_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, best_tau_pt, best_tau_eta, best_tau_phi,{args.nanoVer}) && {triggers[args.era]['ditau_trigger_monitor']} == 1")
 df = df.Define("pass_ditau_probe_monitor", f"PassDiTauTrig_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi,{args.nanoVer}) && {triggers[args.era]['ditau_trigger_monitor']} == 1")
-
 df = df.Define("pass_mutau_second_tau", f"PassMuTauTrig_lowpT_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi,{args.nanoVer}) " ) 
-
 df = df.Define("pass_mutau_second_tau_given", f"PassMuTauTrig_lowpT_byNanoVer(nTrigObj, TrigObj_id, TrigObj_filterBits, TrigObj_pt, TrigObj_eta, TrigObj_phi, second_tau_pt, second_tau_eta, second_tau_phi,{args.nanoVer}) && pass_mutau_tag > 0.5 " ) 
 
+
+
+
+
+
+skimmed_branches.append('best_tau_idDeepTau2018v2p5VSjet')
+skimmed_branches.append('best_tau_idDeepTau2018v2p5VSmu')
+skimmed_branches.append('second_tau_idDeepTau2018v2p5VSjet')
+skimmed_branches.append('second_tau_idDeepTau2018v2p5VSmu')
+skimmed_branches.append("pass_ditau_tag")
+skimmed_branches.append("pass_ditau_probe")
+
+skimmed_branches.append("pass_mutau_muon")
 skimmed_branches.append("pass_mutau_tag")
 skimmed_branches.append("pass_mutau_probe")
 skimmed_branches.append("pass_etau")
@@ -211,9 +164,7 @@ skimmed_branches.append("pass_ditau_tag_monitor")
 skimmed_branches.append("pass_ditau_probe_monitor")
 skimmed_branches.append("pass_mutau_second_tau")
 skimmed_branches.append("pass_mutau_second_tau_given")
-if int(args.era) >= 2022:
-    skimmed_branches.append("pass_ditau_tag")
-    skimmed_branches.append("pass_ditau_probe")
+
 
 df.Snapshot('Events', args.output, ListToStdVector(skimmed_branches))
 

@@ -122,26 +122,69 @@
 # wait 
 
 
-max_jobs=80
-i=0
-for run in  Muon0_Run2022D_v1-v1  Muon0_Run2022D_v2-v1  Muon1_Run2022D_v1-v1  Muon1_Run2022D_v2-v1;
-do 
-for file in $(find  /data/bond/botaoguo/CMSSW_10_6_29/src/PhysicsTools/NanoAODTools/TAU-Trigger-NANO/2023/postBPix/${run}/ -type f); do
-    output_file="postproc_output/${run}/"
-    # echo $output_file
-    if [ -f $output_file ]; then
-        echo "Output file $output_file already exists, skipping..."
-        continue
-    fi
+
+
+
+
+for mc in DY; do 
+    for file in $(find postproc_output/preBPix/$mc -type f); do
+
+    ## Run the python script in the background
+    ### 2018 MC
+    # python3 skimTuple.py --type mc --pu ../python/postprocessing/data/pileup/PileupHistogram-goldenJSON-13tev-2018-99bins_withVar.root --config ./2018trigger.json --selection DeepTau --output skim_output/DYJetsToTauTauToMuTauh_M-50/$(basename "$file")  --input $file > skim_output/logs/DYJets-nohup-simoutput$(basename "$file").log2>&1 &
     
-    # Run the python script in the background
-    echo $file $output_file
-    python2 postproc.py --isMC 0 --era 2023 --nanoVer 13 --output ${output_file} --input "$file" > log/postproc_log$run_$(basename "$file") 2>&1 &  
+    ### 2017 MC
+    python3 skimTuple.py --era 2023 --type mc --nanoVer 13 --selection DeepTau --output skim_output/preBPix/$mc/$(basename "$file")  --input $file > skim_output/logs/preBPix$mc$(basename "$file").log 2>&1 &
     
     # If we've started the maximum number of jobs, wait for them to finish.
-    if (( $i % $max_jobs == 0 )); then
-        wait
-    fi
-    i=$((i+1))
+    # if (( $(($i % $max_jobs)) == 0 )); then
+    #     wait
+    # fi
+    # i=$((i+1))
 done
+done
+# Wait for any remaining jobs to finish.
+
+
+
+
+
+
+for mc in DY; do 
+    for file in $(find postproc_output/postBPix/$mc -type f); do
+
+    ## Run the python script in the background
+    ### 2018 MC
+    # python3 skimTuple.py --type mc --pu ../python/postprocessing/data/pileup/PileupHistogram-goldenJSON-13tev-2018-99bins_withVar.root --config ./2018trigger.json --selection DeepTau --output skim_output/DYJetsToTauTauToMuTauh_M-50/$(basename "$file")  --input $file > skim_output/logs/DYJets-nohup-simoutput$(basename "$file").log2>&1 &
+    
+    ### 2017 MC
+    python3 skimTuple.py --era 2023 --type mc --nanoVer 13 --selection DeepTau --output skim_output/postBPix/$mc/$(basename "$file")  --input $file > skim_output/logs/postBPix$mc$(basename "$file").log 2>&1 &
+    
+    # If we've started the maximum number of jobs, wait for them to finish.
+    # if (( $(($i % $max_jobs)) == 0 )); then
+    #     wait
+    # fi
+    # i=$((i+1))
+done
+done
+# Wait for any remaining jobs to finish.
+# for d in  Muon0_Run2022D_v1-v1 Muon0_Run2022D_v2-v1 Muon1_Run2022D_v1-v1 Muon1_Run2022D_v2-v1 Muon0_Run2023C_v2-v1 Muon0_Run2023C_v4-v1 Muon1_Run2023C_v2-v1 Muon1_Run2023C_v4-v1 Muon0_Run2023C_v1-v1 Muon0_Run2023C_v3-v1 Muon1_Run2023C_v1-v1 Muon1_Run2023C_v3-v1 ;
+# do mkdir skim_output/$d ;
+# done
+
+for d in  Muon0_Run2022D_v1-v1 Muon0_Run2022D_v2-v1 Muon1_Run2022D_v1-v1 Muon1_Run2022D_v2-v1 Muon0_Run2023C_v2-v1 Muon0_Run2023C_v4-v1 Muon1_Run2023C_v2-v1 Muon1_Run2023C_v4-v1 Muon0_Run2023C_v1-v1 Muon0_Run2023C_v3-v1 Muon1_Run2023C_v1-v1 Muon1_Run2023C_v3-v1 ;
+do
+mkdir -p skim_output/$d
+for file in $(find postproc_output/$d/ -type f); do
+
+    ## Run the python script in the background
+    ### 2018 MC
+    # python3 skimTuple.py --type mc --pu ../python/postprocessing/data/pileup/PileupHistogram-goldenJSON-13tev-2018-99bins_withVar.root --config ./2018trigger.json --selection DeepTau --output skim_output/DYJetsToTauTauToMuTauh_M-50/$(basename "$file")  --input $file > skim_output/logs/DYJets-nohup-simoutput$(basename "$file").log2>&1 &
+    
+    python3 skimTuple.py --era 2023 --type data --nanoVer 13 --selection DeepTau --output skim_output/$d/$(basename "$file")  --input $file > skim_output/logs/$d$(basename "$file").log 2>&1 &
+    echo "skimTuple.py --era 2023 --type data --nanoVer 13 --selection DeepTau --output skim_output/$d/$(basename "$file")  --input $file > skim_output/logs/$d$(basename "$file").log 2>&1 &"
+    
+    
+done
+wait
 done
