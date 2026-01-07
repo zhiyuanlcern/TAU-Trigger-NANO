@@ -1,3 +1,2 @@
 # this is a comment
 keep *
-drop *_cleanmask # start with all

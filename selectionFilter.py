@@ -14,7 +14,12 @@ class selectionFilter(Module):
     def __init__(self, isMC, era):
         self.isMC = isMC
         self.era = era
-        self.nanoVer = 10
+        if era == "2023":
+            self.nanoVer = 11
+        elif era == "2024":
+            self.nanoVer = 15
+        else:
+            self.nanoVer = 10
 
         # cutflow hist
         self.cutflow_hist = R.TH1F('pre_selection','pre_selection',20,0,20)
@@ -80,7 +85,7 @@ class selectionFilter(Module):
         muons = Collection(event, "Muon")
         jets = Collection(event, "Jet")
         taus = Collection(event, "Tau")
-        met = Object(event, "MET")
+        met = Object(event, "PuppiMET")
         flag = Object(event, "Flag")
         
         signalMuon = None
@@ -142,6 +147,12 @@ class selectionFilter(Module):
                 if (_ele_v4.Pt() > 10) and (abs(_ele_v4.Eta()) < 2.5) and (_ele.mvaIso_WP90 > 0.5):
                     has_ele = True
                     break
+        elif (self.era == "2024"):
+            for _ele in electrons:
+                _ele_v4 = _ele.p4()
+                if (_ele_v4.Pt() > 10) and (abs(_ele_v4.Eta()) < 2.5) and (_ele.mvaIso_WP90 > 0.5):
+                    has_ele = True
+                    break
         else:
             for _ele in electrons:
                 _ele_v4 = _ele.p4()
@@ -164,8 +175,12 @@ class selectionFilter(Module):
                     break
 
         # Apply MET filter
-        if not flag.METFilters:
-            pass_MET_filter = False
+        # print(self.nanoVer)
+        if self.nanoVer > 12:
+            pass_MET_filter = True
+        else:
+            if not flag.METFilters:
+                pass_MET_filter = False
 
         # return result
         '''
@@ -206,9 +221,11 @@ selection2017MC = lambda : selectionFilter(True,"2017")
 selection2018MC = lambda : selectionFilter(True,"2018")
 selection2022MC = lambda : selectionFilter(True,"2022")
 selection2023MC = lambda : selectionFilter(True,"2023")
+selection2024MC = lambda : selectionFilter(True,"2024")
 selection2016data = lambda : selectionFilter(False,"2016")
 selection2017data = lambda : selectionFilter(False,"2017")
 selection2018data = lambda : selectionFilter(False,"2018")
 selection2022data = lambda : selectionFilter(False,"2022")
 selection2023data = lambda : selectionFilter(False,"2023")
+selection2024data = lambda : selectionFilter(False,"2024")
 

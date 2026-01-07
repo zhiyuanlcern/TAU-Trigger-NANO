@@ -79,6 +79,8 @@ def main():
             Modules = [summary2022MC(), selection2022MC(), tuple2022MC()]
         elif era == '2023':
             Modules = [summary2023MC(), selection2023MC(), tuple2023MC()]
+        elif era == '2024':
+            Modules = [summary2024MC(), selection2024MC(), tuple2024MC()]
         else:
             raise RuntimeError("Please check the right Year!")
     else:
@@ -92,6 +94,8 @@ def main():
             Modules = [summary2022data(), selection2022data(), tuple2022data()]
         elif era == '2023':
             Modules = [summary2023data(), selection2023data(), tuple2023data()]
+        elif era == '2024':
+            Modules = [summary2024data(), selection2024data(), tuple2024data()]
         else:
             raise RuntimeError("Please check the right Year!")
         

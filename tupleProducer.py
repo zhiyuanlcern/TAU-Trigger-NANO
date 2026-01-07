@@ -95,13 +95,13 @@ class tupleProducer(Module):
         self.out.branch("tau_dxy", "F")
         self.out.branch("tau_dz", "F")
         
-        self.out.branch("tau_idDeepTau2017v2p1VSe", "I")
-        self.out.branch("tau_idDeepTau2017v2p1VSmu", "I")
-        self.out.branch("tau_idDeepTau2017v2p1VSjet", "I")
+        # self.out.branch("tau_idDeepTau2017v2p1VSe", "I")
+        # self.out.branch("tau_idDeepTau2017v2p1VSmu", "I")
+        # self.out.branch("tau_idDeepTau2017v2p1VSjet", "I")
 
-        self.out.branch("tau_rawDeepTau2017v2p1VSe", "F")
-        self.out.branch("tau_rawDeepTau2017v2p1VSmu", "F")
-        self.out.branch("tau_rawDeepTau2017v2p1VSjet", "F")
+        # self.out.branch("tau_rawDeepTau2017v2p1VSe", "F")
+        # self.out.branch("tau_rawDeepTau2017v2p1VSmu", "F")
+        # self.out.branch("tau_rawDeepTau2017v2p1VSjet", "F")
                 
         self.out.branch("tau_idDeepTau2018v2p5VSe", "I")
         self.out.branch("tau_idDeepTau2018v2p5VSmu", "I")
@@ -156,12 +156,12 @@ class tupleProducer(Module):
         self.out.branch("second_tau_decayMode","I")
         self.out.branch("second_tau_dxy","F")
         self.out.branch("second_tau_dz","F")
-        self.out.branch("second_tau_idDeepTau2017v2p1VSe","I")
-        self.out.branch("second_tau_idDeepTau2017v2p1VSmu","I")
-        self.out.branch("second_tau_idDeepTau2017v2p1VSjet","I")
-        self.out.branch("second_tau_rawDeepTau2017v2p1VSe","F")
-        self.out.branch("second_tau_rawDeepTau2017v2p1VSmu","F")
-        self.out.branch("second_tau_rawDeepTau2017v2p1VSjet","F")
+        # self.out.branch("second_tau_idDeepTau2017v2p1VSe","I")
+        # self.out.branch("second_tau_idDeepTau2017v2p1VSmu","I")
+        # self.out.branch("second_tau_idDeepTau2017v2p1VSjet","I")
+        # self.out.branch("second_tau_rawDeepTau2017v2p1VSe","F")
+        # self.out.branch("second_tau_rawDeepTau2017v2p1VSmu","F")
+        # self.out.branch("second_tau_rawDeepTau2017v2p1VSjet","F")
 
         self.out.branch("best_tau_rawIso", "F")
         self.out.branch("best_tau_pt", "F")
@@ -173,12 +173,12 @@ class tupleProducer(Module):
         self.out.branch("best_tau_decayMode","I")
         self.out.branch("best_tau_dxy","F")
         self.out.branch("best_tau_dz","F")
-        self.out.branch("best_tau_idDeepTau2017v2p1VSe","I")
-        self.out.branch("best_tau_idDeepTau2017v2p1VSmu","I")
-        self.out.branch("best_tau_idDeepTau2017v2p1VSjet","I")
-        self.out.branch("best_tau_rawDeepTau2017v2p1VSe","F")
-        self.out.branch("best_tau_rawDeepTau2017v2p1VSmu","F")
-        self.out.branch("best_tau_rawDeepTau2017v2p1VSjet","F")
+        # self.out.branch("best_tau_idDeepTau2017v2p1VSe","I")
+        # self.out.branch("best_tau_idDeepTau2017v2p1VSmu","I")
+        # self.out.branch("best_tau_idDeepTau2017v2p1VSjet","I")
+        # self.out.branch("best_tau_rawDeepTau2017v2p1VSe","F")
+        # self.out.branch("best_tau_rawDeepTau2017v2p1VSmu","F")
+        # self.out.branch("best_tau_rawDeepTau2017v2p1VSjet","F")
         
         self.out.branch("best_tau_idDeepTau2018v2p5VSe", "I")
         self.out.branch("best_tau_idDeepTau2018v2p5VSmu", "I")
@@ -578,21 +578,21 @@ class tupleProducer(Module):
             # print("stats for the tau in Botao", _tau_v4.Pt(), abs(_tau_v4.Eta()), self.deltaR2(signalMu_v4, _tau_v4) )   
             if (_tau_v4.Pt()) > 18 and (abs(_tau_v4.Eta()) < 2.3) and (self.deltaR2(signalMu_v4, _tau_v4) > deltaR2Thr):
                 if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017" or self.era == "2016" or self.nanoVer >= 11):
-                    pass_mva_sel = (_tau.idDecayModeOldDMs > 0)  # idDecayModeOldDMs for nano V10 tau group tuple
+                    pass_mva_sel = (_tau.idDecayModeNewDMs > 0)  #
                 else:
                     pass_mva_sel = (_tau.rawMVAoldDM2017v2 > 0)    # and tau.tauID("againstMuonLoose3") > 0.5f ?
-                pass_deep_sel = ( (_tau.rawDeepTau2017v2p1VSjet > 0) and (_tau.idDeepTau2017v2p1VSe > 0.5) and (_tau.idDeepTau2017v2p1VSmu > 0.5) )
+                pass_deep_sel = ( (_tau.rawDeepTau2018v2p5VSjet > 0) and (_tau.idDeepTau2018v2p5VSe > 0.5) and (_tau.idDeepTau2018v2p5VSmu > 0.5) )
                 if (pass_mva_sel or pass_deep_sel) and ( (pt not in best_tau.keys()) or (best_tau[pt].p4().Pt() < _tau.p4().Pt()) ):
                     best_tau[pt] = _tau
                 
                 if ((self.era == "2018" and self.nanoVer == 10) or self.era == "2017"or self.era == "2016" or self.nanoVer >= 11):
-                    if pass_mva_sel and ( (mva not in best_tau.keys()) or (best_tau[mva].idDecayModeOldDMs < _tau.idDecayModeOldDMs) ):
+                    if pass_mva_sel and ( (mva not in best_tau.keys()) or (best_tau[mva].idDecayModeNewDMs < _tau.idDecayModeNewDMs) ):
                         best_tau[mva] = _tau                    
                 else:
                     if pass_mva_sel and ( (mva not in best_tau.keys()) or (best_tau[mva].rawMVAoldDM2017v2 < _tau.rawMVAoldDM2017v2) ):
                         best_tau[mva] = _tau
-                # may need to change to rawDeepTau2018v2p5VSjet
-                if pass_deep_sel and ( (deepTau not in best_tau.keys()) or (best_tau[deepTau].rawDeepTau2017v2p1VSjet < _tau.rawDeepTau2017v2p1VSjet) ):
+                
+                if pass_deep_sel and ( (deepTau not in best_tau.keys()) or (best_tau[deepTau].rawDeepTau2018v2p5VSjet < _tau.rawDeepTau2018v2p5VSjet) ):
                     best_tau[deepTau] = _tau
         #
         if genleptons is None:
@@ -742,7 +742,7 @@ class tupleProducer(Module):
         #electrons = Collection(event, "Electron")
         muons = Collection(event, "Muon")
         jets = Collection(event, "Jet")
-        met = Object(event, "MET")
+        met = Object(event, "PuppiMET")
         taus = Collection(event, "Tau")
         
         #gendressedlep = Collection(event, "GenDressedLepton")    # gen leptons ?
@@ -974,12 +974,12 @@ class tupleProducer(Module):
             self.out.fillBranch("tau_decayMode", tau.decayMode)
             self.out.fillBranch("tau_dxy", tau.dxy)
             self.out.fillBranch("tau_dz", tau.dz)
-            self.out.fillBranch("tau_idDeepTau2017v2p1VSe", tau.idDeepTau2017v2p1VSe)
-            self.out.fillBranch("tau_idDeepTau2017v2p1VSmu", tau.idDeepTau2017v2p1VSmu)
-            self.out.fillBranch("tau_idDeepTau2017v2p1VSjet", tau.idDeepTau2017v2p1VSjet)
-            self.out.fillBranch("tau_rawDeepTau2017v2p1VSe", tau.rawDeepTau2017v2p1VSe)
-            self.out.fillBranch("tau_rawDeepTau2017v2p1VSmu", tau.rawDeepTau2017v2p1VSmu)
-            self.out.fillBranch("tau_rawDeepTau2017v2p1VSjet", tau.rawDeepTau2017v2p1VSjet)
+            # self.out.fillBranch("tau_idDeepTau2017v2p1VSe", tau.idDeepTau2017v2p1VSe)
+            # self.out.fillBranch("tau_idDeepTau2017v2p1VSmu", tau.idDeepTau2017v2p1VSmu)
+            # self.out.fillBranch("tau_idDeepTau2017v2p1VSjet", tau.idDeepTau2017v2p1VSjet)
+            # self.out.fillBranch("tau_rawDeepTau2017v2p1VSe", tau.rawDeepTau2017v2p1VSe)
+            # self.out.fillBranch("tau_rawDeepTau2017v2p1VSmu", tau.rawDeepTau2017v2p1VSmu)
+            # self.out.fillBranch("tau_rawDeepTau2017v2p1VSjet", tau.rawDeepTau2017v2p1VSjet)
             self.out.fillBranch("tau_rawIso", tau.rawIso)
             
             self.out.fillBranch("tau_idDeepTau2018v2p5VSe", tau.idDeepTau2018v2p5VSe)
@@ -997,12 +997,12 @@ class tupleProducer(Module):
             self.out.fillBranch("tau_decayMode", -999)
             self.out.fillBranch("tau_dxy", -999.0)
             self.out.fillBranch("tau_dz", -999.0)
-            self.out.fillBranch("tau_idDeepTau2017v2p1VSe", -999)
-            self.out.fillBranch("tau_idDeepTau2017v2p1VSmu", -999)
-            self.out.fillBranch("tau_idDeepTau2017v2p1VSjet", -999)
-            self.out.fillBranch("tau_rawDeepTau2017v2p1VSe", -999.0)
-            self.out.fillBranch("tau_rawDeepTau2017v2p1VSmu", -999.0)
-            self.out.fillBranch("tau_rawDeepTau2017v2p1VSjet", -999.0)
+            # self.out.fillBranch("tau_idDeepTau2017v2p1VSe", -999)
+            # self.out.fillBranch("tau_idDeepTau2017v2p1VSmu", -999)
+            # self.out.fillBranch("tau_idDeepTau2017v2p1VSjet", -999)
+            # self.out.fillBranch("tau_rawDeepTau2017v2p1VSe", -999.0)
+            # self.out.fillBranch("tau_rawDeepTau2017v2p1VSmu", -999.0)
+            # self.out.fillBranch("tau_rawDeepTau2017v2p1VSjet", -999.0)
             self.out.fillBranch("tau_rawIso", -999.0)
 
             self.out.fillBranch("tau_idDeepTau2018v2p5VSe", -999)
@@ -1021,12 +1021,12 @@ class tupleProducer(Module):
             self.out.fillBranch("best_tau_decayMode", best_tau.decayMode)
             self.out.fillBranch("best_tau_dxy", best_tau.dxy)
             self.out.fillBranch("best_tau_dz", best_tau.dz)
-            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSe", best_tau.idDeepTau2017v2p1VSe)
-            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSmu", best_tau.idDeepTau2017v2p1VSmu)
-            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSjet", best_tau.idDeepTau2017v2p1VSjet)
-            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSe", best_tau.rawDeepTau2017v2p1VSe)
-            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSmu", best_tau.rawDeepTau2017v2p1VSmu)
-            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSjet", best_tau.rawDeepTau2017v2p1VSjet)
+            # self.out.fillBranch("best_tau_idDeepTau2017v2p1VSe", best_tau.idDeepTau2017v2p1VSe)
+            # self.out.fillBranch("best_tau_idDeepTau2017v2p1VSmu", best_tau.idDeepTau2017v2p1VSmu)
+            # self.out.fillBranch("best_tau_idDeepTau2017v2p1VSjet", best_tau.idDeepTau2017v2p1VSjet)
+            # self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSe", best_tau.rawDeepTau2017v2p1VSe)
+            # self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSmu", best_tau.rawDeepTau2017v2p1VSmu)
+            # self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSjet", best_tau.rawDeepTau2017v2p1VSjet)
             self.out.fillBranch("best_tau_rawIso", best_tau.rawIso)
             self.out.fillBranch("best_tau_idDeepTau2018v2p5VSe", best_tau.idDeepTau2018v2p5VSe)
             self.out.fillBranch("best_tau_idDeepTau2018v2p5VSmu", best_tau.idDeepTau2018v2p5VSmu)
@@ -1044,12 +1044,12 @@ class tupleProducer(Module):
             self.out.fillBranch("best_tau_decayMode", -999)
             self.out.fillBranch("best_tau_dxy", -999.0)
             self.out.fillBranch("best_tau_dz", -999.0)
-            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSe", -999)
-            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSmu", -999)
-            self.out.fillBranch("best_tau_idDeepTau2017v2p1VSjet", -999)
-            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSe", -999.0)
-            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSmu", -999.0)
-            self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSjet", -999.0)
+            # self.out.fillBranch("best_tau_idDeepTau2017v2p1VSe", -999)
+            # self.out.fillBranch("best_tau_idDeepTau2017v2p1VSmu", -999)
+            # self.out.fillBranch("best_tau_idDeepTau2017v2p1VSjet", -999)
+            # self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSe", -999.0)
+            # self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSmu", -999.0)
+            # self.out.fillBranch("best_tau_rawDeepTau2017v2p1VSjet", -999.0)
             self.out.fillBranch("best_tau_rawIso", -999.0)
         
         if has_second_tau:
@@ -1062,12 +1062,12 @@ class tupleProducer(Module):
             self.out.fillBranch("second_tau_decayMode", second_tau.decayMode)
             self.out.fillBranch("second_tau_dxy", second_tau.dxy)
             self.out.fillBranch("second_tau_dz", second_tau.dz)
-            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSe", second_tau.idDeepTau2017v2p1VSe)
-            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSmu", second_tau.idDeepTau2017v2p1VSmu)
-            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSjet", second_tau.idDeepTau2017v2p1VSjet)
-            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSe", second_tau.rawDeepTau2017v2p1VSe)
-            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSmu", second_tau.rawDeepTau2017v2p1VSmu)
-            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSjet", second_tau.rawDeepTau2017v2p1VSjet)
+            # self.out.fillBranch("second_tau_idDeepTau2017v2p1VSe", second_tau.idDeepTau2017v2p1VSe)
+            # self.out.fillBranch("second_tau_idDeepTau2017v2p1VSmu", second_tau.idDeepTau2017v2p1VSmu)
+            # self.out.fillBranch("second_tau_idDeepTau2017v2p1VSjet", second_tau.idDeepTau2017v2p1VSjet)
+            # self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSe", second_tau.rawDeepTau2017v2p1VSe)
+            # self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSmu", second_tau.rawDeepTau2017v2p1VSmu)
+            # self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSjet", second_tau.rawDeepTau2017v2p1VSjet)
             self.out.fillBranch("second_tau_rawIso", second_tau.rawIso)
             
             self.out.fillBranch("second_tau_idDeepTau2018v2p5VSe", second_tau.idDeepTau2018v2p5VSe)
@@ -1087,12 +1087,12 @@ class tupleProducer(Module):
             self.out.fillBranch("second_tau_decayMode", -999)
             self.out.fillBranch("second_tau_dxy", -999.0)
             self.out.fillBranch("second_tau_dz", -999.0)
-            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSe", -999)
-            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSmu", -999)
-            self.out.fillBranch("second_tau_idDeepTau2017v2p1VSjet", -999)
-            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSe", -999.0)
-            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSmu", -999.0)
-            self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSjet", -999.0)
+            # self.out.fillBranch("second_tau_idDeepTau2017v2p1VSe", -999)
+            # self.out.fillBranch("second_tau_idDeepTau2017v2p1VSmu", -999)
+            # self.out.fillBranch("second_tau_idDeepTau2017v2p1VSjet", -999)
+            # self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSe", -999.0)
+            # self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSmu", -999.0)
+            # self.out.fillBranch("second_tau_rawDeepTau2017v2p1VSjet", -999.0)
             self.out.fillBranch("second_tau_rawIso", -999.0)
             
             self.out.fillBranch("second_tau_idDeepTau2018v2p5VSe", -999)
@@ -1158,10 +1158,12 @@ tuple2017MC = lambda : tupleProducer(True,"2017",9)
 tuple2018MC = lambda : tupleProducer(True,"2018",10)
 tuple2022MC = lambda : tupleProducer(True,"2022", 11)
 tuple2023MC = lambda : tupleProducer(True,"2023", 13)
+tuple2024MC = lambda : tupleProducer(True,"2024", 15)
 tuple2016data = lambda : tupleProducer(False,"2016",10)
 tuple2017data = lambda : tupleProducer(False,"2017",10)
 tuple2018data = lambda : tupleProducer(False,"2018",10)
 tuple2022data = lambda : tupleProducer(False,"2022", 11)
 tuple2023data = lambda : tupleProducer(False,"2023", 13)
+tuple2024data = lambda : tupleProducer(False,"2024", 15)
 
 
